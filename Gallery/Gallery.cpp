@@ -3,6 +3,8 @@
 #include "MemoryAccess.h"
 #include "AlbumManager.h"
 
+#include <ctime>
+#include <chrono>
 
 int getCommandNumberFromUser()
 {
@@ -38,7 +40,9 @@ int main(void)
 
 
 	std::string albumName;
-	std::cout << "Welcome to Gallery!" << std::endl;
+	std::cout << "Gallery project by Itay Dali" << std::endl;
+	auto timenow =	std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	std::cout << ctime(&timenow);
 	std::cout << "===================" << std::endl;
 	std::cout << "Type " << HELP << " to a list of all supported commands" << std::endl;
 	
