@@ -323,7 +323,7 @@ User MemoryAccess::getTopTaggedUser()
 Picture MemoryAccess::getTopTaggedPicture()
 {
 	int currentMax = -1;
-	const Picture* mostTaggedPic = nullptr;
+	std::unique_ptr<Picture> mostTaggedPic = nullptr;
 	for (const auto& album: m_albums) {
 		for (const Picture& picture: album.getPictures()) {
 			int tagsCount = picture.getTagsCount();
@@ -335,7 +335,7 @@ Picture MemoryAccess::getTopTaggedPicture()
 				continue;
 			}
 
-			mostTaggedPic = &picture;
+			mostTaggedPic = std::make_unique<Picture>(picture);
 			currentMax = tagsCount;
 		}
 	}
