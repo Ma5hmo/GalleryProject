@@ -71,17 +71,13 @@ Album MemoryAccess::createDummyAlbum(const User& user)
 
 void MemoryAccess::cleanUserData(const User& user)
 {
-	for (auto& albumIt = m_albums.begin(); albumIt != m_albums.end(); ++albumIt) // have to use this method cause the iterator needs to be changed mid iteration
+	for (auto albumIt = m_albums.begin(); albumIt != m_albums.end(); ++albumIt) // have to use this method cause the iterator needs to be changed mid iteration
 	{
 		if (albumIt->getOwnerId() == user.getId())
 		{
 			m_albums.remove(*albumIt++);
 		}
-		for (auto& picture : albumIt->getPictures()) {
-			{
-				picture.untagUser(user);
-			}
-		}
+		albumIt->untagUserInAlbum(user.getId());
 	}
 }
 
