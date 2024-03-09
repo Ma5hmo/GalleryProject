@@ -56,5 +56,5 @@ private:
 	auto getAlbumIfExists(const std::string& albumName);
 
 	Album createDummyAlbum(const User& user);
-	void cleanUserData(const User& userId);
+	void cleanUserData(const User& user);
 };
