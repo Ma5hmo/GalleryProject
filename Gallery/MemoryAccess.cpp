@@ -69,6 +69,22 @@ Album MemoryAccess::createDummyAlbum(const User& user)
 	return album;
 }
 
+void MemoryAccess::cleanUserData(const User& user)
+{
+	for (auto& albumIt = m_albums.begin(); albumIt != m_albums.end(); ++albumIt) // have to use this method cause the iterator needs to be changed mid iteration
+	{
+		if (albumIt->getOwnerId() == user.getId())
+		{
+			m_albums.remove(*albumIt++);
+		}
+		for (auto& picture : albumIt->getPictures()) {
+			{
+				picture.untagUser(user);
+			}
+		}
+	}
+}
+
 const std::list<Album> MemoryAccess::getAlbums() 
 {
 	return m_albums;
@@ -182,7 +198,7 @@ void MemoryAccess::createUser(User& user)
 void MemoryAccess::deleteUser(const User& user)
 {
 	if (doesUserExists(user.getId())) {
-	
+		cleanUserData(user);
 		for (auto iter = m_users.begin(); iter != m_users.end(); ++iter) {
 			if (*iter == user) {
 				iter = m_users.erase(iter);
