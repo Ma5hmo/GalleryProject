@@ -69,6 +69,18 @@ Album MemoryAccess::createDummyAlbum(const User& user)
 	return album;
 }
 
+void MemoryAccess::cleanUserData(const User& user)
+{
+	for (auto albumIt = m_albums.begin(); albumIt != m_albums.end(); ++albumIt) // have to use this method cause the iterator needs to be changed mid iteration
+	{
+		if (albumIt->getOwnerId() == user.getId())
+		{
+			m_albums.remove(*albumIt++);
+		}
+		albumIt->untagUserInAlbum(user.getId());
+	}
+}
+
 const std::list<Album> MemoryAccess::getAlbums() 
 {
 	return m_albums;
@@ -182,7 +194,7 @@ void MemoryAccess::createUser(User& user)
 void MemoryAccess::deleteUser(const User& user)
 {
 	if (doesUserExists(user.getId())) {
-	
+		cleanUserData(user);
 		for (auto iter = m_users.begin(); iter != m_users.end(); ++iter) {
 			if (*iter == user) {
 				iter = m_users.erase(iter);
@@ -307,7 +319,7 @@ User MemoryAccess::getTopTaggedUser()
 Picture MemoryAccess::getTopTaggedPicture()
 {
 	int currentMax = -1;
-	const Picture* mostTaggedPic = nullptr;
+	std::unique_ptr<Picture> mostTaggedPic = nullptr;
 	for (const auto& album: m_albums) {
 		for (const Picture& picture: album.getPictures()) {
 			int tagsCount = picture.getTagsCount();
@@ -319,7 +331,7 @@ Picture MemoryAccess::getTopTaggedPicture()
 				continue;
 			}
 
-			mostTaggedPic = &picture;
+			mostTaggedPic = std::make_unique<Picture>(picture);
 			currentMax = tagsCount;
 		}
 	}
