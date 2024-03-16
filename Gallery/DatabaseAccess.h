@@ -6,7 +6,7 @@ class DatabaseAccess : public IDataAccess
 {
 
 public:
-	DatabaseAccess() = default;
+	DatabaseAccess();
 	virtual ~DatabaseAccess() = default;
 
 	// album related
@@ -47,9 +47,16 @@ public:
 	void close() override;
 	void clear() override;
 
+
 private:
-	bool execStatement(const char* sqlStatement) const;
+	void execStatement(const char* sqlStatement) const;
+	void execQuery(const char* sqlStatement, int(*callback)(void*, int, char**, char**), void* callbackData) const;
 	void createDatabase() const;
+
+	static int albumListDBCallback(void* albumList, int argc, char** argv, char** azColName);
+	static int singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName);
+	static int singleColumnDBCallback(void* out, int argc, char** argv, char** azColName);
+	static int printDBCallback(void* data, int argc, char** argv, char** azColName);
 
 	static const char* DBFILENAME;
 	sqlite3* _db;

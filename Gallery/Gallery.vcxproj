@@ -95,6 +95,7 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="MyException.h" />
     <ClInclude Include="Picture.h" />
+    <ClInclude Include="SQLException.h" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="User.h" />
   </ItemGroup>

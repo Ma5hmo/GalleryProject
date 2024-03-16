@@ -42,7 +42,7 @@ void printWelcome()
 int main(void)
 {
 	// initialization data access
-	DatabaseAccess dataAccess;
+	MemoryAccess dataAccess;
 
 	// initialize album manager
 	AlbumManager albumManager(dataAccess);

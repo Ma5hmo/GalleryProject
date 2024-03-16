@@ -1,7 +1,13 @@
 #include "DatabaseAccess.h"
 #include "io.h"
+#include "SQLException.h"
 
 const char* DatabaseAccess::DBFILENAME = "galleryDB.sqlite";
+
+DatabaseAccess::DatabaseAccess()
+	: _db(nullptr)
+{
+}
 
 bool DatabaseAccess::open()
 {
@@ -29,14 +35,22 @@ void DatabaseAccess::clear()
 	// TODO
 }
 
-bool DatabaseAccess::execStatement(const char* sqlStatement) const
+void DatabaseAccess::execStatement(const char* sqlStatement) const
 {
 	char* errmsg = nullptr;
 	if (sqlite3_exec(_db, sqlStatement, nullptr, nullptr, &errmsg) != SQLITE_OK)
 	{
-		throw std::runtime_error(errmsg);
+		throw SQLException(errmsg);
 	}
-	return true;
+}
+
+void DatabaseAccess::execQuery(const char* sqlStatement, int(*callback)(void*, int, char**, char**), void* callbackData) const
+{
+	char* errmsg = nullptr;
+	if (sqlite3_exec(_db, sqlStatement, callback, callbackData, &errmsg) != SQLITE_OK)
+	{
+		throw SQLException(errmsg);
+	}
 }
 
 void DatabaseAccess::createDatabase() const
@@ -51,17 +65,105 @@ void DatabaseAccess::createDatabase() const
 		execStatement(picturesQuery);
 		execStatement(tagsQuery);
 	}
-	catch (const std::exception& e)
+	catch (const SQLException& e)
 	{
 		std::cerr << "Error creating database: " << e.what() << std::endl;
 	}
 }
 
+int DatabaseAccess::albumListDBCallback(void* albumList, int argc, char** argv, char** azColName)
+{
+	Album album;
+	singleAlbumDBCallback(&album, argc, argv, azColName);
+	((std::list<Album>*)albumList)->push_back(album);
+}
+
+int DatabaseAccess::singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName)
+{
+	for (int i = 0; i < argc; i++)
+	{
+		const std::string& col = azColName[i];
+		if (col == "NAME")
+		{
+			((Album*)outAlbum)->setName(argv[i]);
+		}
+		else if (col == "CREATION_DATE")
+		{
+			((Album*)outAlbum)->setCreationDate(argv[i]);
+		}
+		else if (col == "USER_ID")
+		{
+			((Album*)outAlbum)->setOwner(std::stoi(argv[i]));
+		}
+	}
+}
+
+int DatabaseAccess::singleColumnDBCallback(void* out, int argc, char** argv, char** azColName)
+{
+	*((char**)out) = argv[0];
+}
+
+int DatabaseAccess::printDBCallback(void* data, int argc, char** argv, char** azColName)
+{
+}
+
+const std::list<Album> DatabaseAccess::getAlbums()
+{
+	auto sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums;";
+	std::list<Album> ans;
+	execQuery(sql, albumListDBCallback, &ans);
+	return ans;
+}
+
+const std::list<Album> DatabaseAccess::getAlbumsOfUser(const User& user)
+{
+	const auto& sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums WHERE USER_ID=" + std::to_string(user.getId()) + ';';
+	std::list<Album> ans;
+	execQuery(sql.c_str(), albumListDBCallback, &ans);
+	return ans;
+}
+
+void DatabaseAccess::createAlbum(const Album& album)
+{
+	const auto& sql = "INSERT INTO Albums(NAME, CREATION_DATE, USER_ID) VALUES (\"" + album.getName() 
+		+ ", \"" + album.getCreationDate() + "\", " + std::to_string(album.getOwnerId()) + ");";
+	execStatement(sql.c_str());
+}
+
 void DatabaseAccess::deleteAlbum(const std::string& albumName, int userId)
 {
 	const auto& sql = "DELETE FROM Albums WHERE USER_ID=" + std::to_string(userId) +
-		" AND NAME=" + albumName + ';';
+		" AND NAME=\"" + albumName + "\";";
 	execStatement(sql.c_str());
+}
+
+bool DatabaseAccess::doesAlbumExists(const std::string& albumName, int userId)
+{
+	const auto& sql = "SELECT COUNT(1) FROM Albums WHERE NAME=\"" + albumName + "\" AND USER_ID=" + std::to_string(userId) + ';';
+	char* countString = nullptr;
+	execQuery(sql.c_str(), singleColumnDBCallback, &countString);
+	return countString[0] != '0'; // count is greater than zero
+}
+
+Album DatabaseAccess::openAlbum(const std::string& albumName)
+{
+	const auto& sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums WHERE NAME=\"" + albumName + "\";";
+	Album album;
+	execQuery(sql.c_str(), singleAlbumDBCallback, &album);
+	return album;
+}
+
+void DatabaseAccess::closeAlbum(Album& pAlbum)
+{
+}
+
+void DatabaseAccess::printAlbums()
+{
+	std::cout << "Album list:" << std::endl;
+	std::cout << "-----------" << std::endl;
+	for (const Album& album : getAlbums()) {
+		std::cout << std::setw(5) << "* " << album;
+	}
 }
 
 void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
@@ -91,3 +193,10 @@ void DatabaseAccess::deleteUser(const User& user)
 	const auto& sql = "DELETE FROM Users WHERE ID=" + std::to_string(user.getId()) + ';';
 	execStatement(sql.c_str());
 }
+
+bool DatabaseAccess::doesUserExists(int userId)
+{
+	const auto& sql = "SELECT COUNT(1) FROM Users WHERE ID=" + std::to_string(userId) + ';';
+	char* countString = nullptr;
+	execQuery(sql.c_str(), singleColumnDBCallback, &countString);
+	return countString[0] != '0'; // count is greater than zero}
