@@ -1,12 +1,21 @@
 #include "DatabaseAccess.h"
 #include "io.h"
 #include "SQLException.h"
+#include <set>
 
 const char* DatabaseAccess::DBFILENAME = "galleryDB.sqlite";
 
 DatabaseAccess::DatabaseAccess()
 	: _db(nullptr)
 {
+}
+
+User DatabaseAccess::getTopTaggedUser()
+{
+	std::set<std::pair<User, int>> l;
+	auto sql = "SELECT Users.ID ID, Users.NAME NAME, COUNT(1) COUNT FROM Tags JOIN Users on USER_ID=Users.ID GROUP BY Users.ID;";
+	execQuery(sql, topTaggedUserDBCallback, &l);
+	return l.begin()->first;
 }
 
 bool DatabaseAccess::open()
@@ -80,20 +89,21 @@ int DatabaseAccess::albumListDBCallback(void* albumList, int argc, char** argv, 
 
 int DatabaseAccess::singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName)
 {
+	Album* album = (Album*)outAlbum;
 	for (int i = 0; i < argc; i++)
 	{
 		const std::string& col = azColName[i];
 		if (col == "NAME")
 		{
-			((Album*)outAlbum)->setName(argv[i]);
+			album->setName(argv[i]);
 		}
 		else if (col == "CREATION_DATE")
 		{
-			((Album*)outAlbum)->setCreationDate(argv[i]);
+			album->setCreationDate(argv[i]);
 		}
 		else if (col == "USER_ID")
 		{
-			((Album*)outAlbum)->setOwner(std::stoi(argv[i]));
+			album->setOwner(std::stoi(argv[i]));
 		}
 	}
 }
@@ -103,8 +113,50 @@ int DatabaseAccess::singleColumnDBCallback(void* out, int argc, char** argv, cha
 	*((char**)out) = argv[0];
 }
 
-int DatabaseAccess::printDBCallback(void* data, int argc, char** argv, char** azColName)
+int DatabaseAccess::printUserDBCallback(void*, int argc, char** argv, char** azColName)
 {
+	User user(0, "");
+	singleUserDBCallback(&user, argc, argv, azColName);
+	std::cout << user << std::endl;
+}
+
+int DatabaseAccess::singleUserDBCallback(void* outUser, int argc, char** argv, char** azColName)
+{
+	User* user = (User*)outUser;
+	for (int i = 0; i < argc; i++)
+	{
+		const std::string& col = azColName[i];
+		if (col == "NAME")
+		{
+			user->setName(argv[i]);
+		}
+		else if (col == "ID")
+		{
+			user->setId(std::stoi(argv[i]));
+		}
+	}
+}
+
+int DatabaseAccess::topTaggedUserDBCallback(void* outSet, int argc, char** argv, char** azColName)
+{
+	std::pair<User, int>& pair = { User(0, ""), 0 };
+	for (int i = 0; i < argc; i++)
+	{
+		const std::string& col = azColName[i];
+		if (col == "NAME")
+		{
+			pair.first.setName(argv[i]);
+		}
+		else if (col == "ID")
+		{
+			pair.first.setId(std::stoi(argv[i]));
+		}
+		else if (col == "COUNT")
+		{
+			pair.second = std::stoi(argv[i]);
+		}
+	}
+	((std::set<std::pair<User, int>>*)outSet)->insert(pair);
 }
 
 const std::list<Album> DatabaseAccess::getAlbums()
@@ -125,7 +177,7 @@ const std::list<Album> DatabaseAccess::getAlbumsOfUser(const User& user)
 
 void DatabaseAccess::createAlbum(const Album& album)
 {
-	const auto& sql = "INSERT INTO Albums(NAME, CREATION_DATE, USER_ID) VALUES (\"" + album.getName() 
+	const auto& sql = "INSERT INTO Albums(NAME, CREATION_DATE, USER_ID) VALUES (\"" + album.getName()
 		+ ", \"" + album.getCreationDate() + "\", " + std::to_string(album.getOwnerId()) + ");";
 	execStatement(sql.c_str());
 }
@@ -147,6 +199,7 @@ bool DatabaseAccess::doesAlbumExists(const std::string& albumName, int userId)
 
 Album DatabaseAccess::openAlbum(const std::string& albumName)
 {
+	//	const auto& sql = "SELECT * FROM Tags JOIN Pictures ON PICTURE_ID=Pictures.id JOIN Albums ON ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName + "\";";
 	const auto& sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums WHERE NAME=\"" + albumName + "\";";
 	Album album;
 	execQuery(sql.c_str(), singleAlbumDBCallback, &album);
@@ -196,6 +249,12 @@ void DatabaseAccess::untagUserInPicture(const std::string& albumName, const std:
 	execStatement(sql.c_str());
 }
 
+void DatabaseAccess::printUsers()
+{
+	auto sql = "SELECT * FROM Users;";
+	execQuery(sql, printUserDBCallback, nullptr);
+}
+
 void DatabaseAccess::createUser(User& user)
 {
 	const auto& sql = "INSERT INTO Users(ID, NAME) VALUES (" + std::to_string(user.getId()) + ", \""
@@ -215,3 +274,17 @@ bool DatabaseAccess::doesUserExists(int userId)
 	char* countString = nullptr;
 	execQuery(sql.c_str(), singleColumnDBCallback, &countString);
 	return countString[0] != '0'; // count is greater than zero}
+}
+
+User DatabaseAccess::getUser(int userId)
+{
+	const auto& sql = "SELECT NAME FROM Users WHERE ID=" + std::to_string(userId) + ';';
+	User user(userId, "");
+	execQuery(sql.c_str(), singleUserDBCallback, &user);
+	return user;
+}
+
+inline bool operator<(const std::pair<User, int>& first, const std::pair<User, int>& second)
+{
+	return first.second < second.second;
+}

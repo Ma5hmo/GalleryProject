@@ -56,7 +56,10 @@ private:
 	static int albumListDBCallback(void* albumList, int argc, char** argv, char** azColName);
 	static int singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName);
 	static int singleColumnDBCallback(void* out, int argc, char** argv, char** azColName);
-	static int printDBCallback(void* data, int argc, char** argv, char** azColName);
+	static int printUserDBCallback(void*, int argc, char** argv, char** azColName);
+	static int singleUserDBCallback(void* outUser, int argc, char** argv, char** azColName);
+
+	static int topTaggedUserDBCallback(void* outPair, int argc, char** argv, char** azColName);
 
 	static const char* DBFILENAME;
 	sqlite3* _db;
