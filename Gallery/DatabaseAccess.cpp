@@ -1,7 +1,11 @@
 #include "DatabaseAccess.h"
 #include "io.h"
+#include <vector>
+#include <algorithm>
+
+#include "AlbumNotOpenException.h"
+#include "ItemNotFoundException.h"
 #include "SQLException.h"
-#include <set>
 
 const char* DatabaseAccess::DBFILENAME = "galleryDB.sqlite";
 
@@ -12,10 +16,11 @@ DatabaseAccess::DatabaseAccess()
 
 User DatabaseAccess::getTopTaggedUser()
 {
-	std::set<std::pair<User, int>> l;
+	std::vector<std::pair<User, int>> usersCount;
 	auto sql = "SELECT Users.ID ID, Users.NAME NAME, COUNT(1) COUNT FROM Tags JOIN Users on USER_ID=Users.ID GROUP BY Users.ID;";
-	execQuery(sql, topTaggedUserDBCallback, &l);
-	return l.begin()->first;
+	execQuery(sql, topTaggedUserDBCallback, &usersCount);
+	std::sort(usersCount.begin(), usersCount.end());
+	return usersCount.begin()->first;
 }
 
 bool DatabaseAccess::open()
@@ -41,7 +46,6 @@ void DatabaseAccess::close()
 
 void DatabaseAccess::clear()
 {
-	// TODO
 }
 
 void DatabaseAccess::execStatement(const char* sqlStatement) const
@@ -80,11 +84,23 @@ void DatabaseAccess::createDatabase() const
 	}
 }
 
+int DatabaseAccess::countQuery(const char* sql) const
+{
+	char* countString = nullptr;
+	execQuery(sql, singleColumnDBCallback, &countString);
+	if (countString == nullptr)
+	{
+		throw MyException("Error counting albums");
+	}
+	return std::stoi(countString);
+}
+
 int DatabaseAccess::albumListDBCallback(void* albumList, int argc, char** argv, char** azColName)
 {
 	Album album;
 	singleAlbumDBCallback(&album, argc, argv, azColName);
 	((std::list<Album>*)albumList)->push_back(album);
+	return 0;
 }
 
 int DatabaseAccess::singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName)
@@ -106,11 +122,13 @@ int DatabaseAccess::singleAlbumDBCallback(void* outAlbum, int argc, char** argv,
 			album->setOwner(std::stoi(argv[i]));
 		}
 	}
+	return 0;
 }
 
 int DatabaseAccess::singleColumnDBCallback(void* out, int argc, char** argv, char** azColName)
 {
 	*((char**)out) = argv[0];
+	return 0;
 }
 
 int DatabaseAccess::printUserDBCallback(void*, int argc, char** argv, char** azColName)
@@ -118,6 +136,7 @@ int DatabaseAccess::printUserDBCallback(void*, int argc, char** argv, char** azC
 	User user(0, "");
 	singleUserDBCallback(&user, argc, argv, azColName);
 	std::cout << user << std::endl;
+	return 0;
 }
 
 int DatabaseAccess::singleUserDBCallback(void* outUser, int argc, char** argv, char** azColName)
@@ -135,11 +154,12 @@ int DatabaseAccess::singleUserDBCallback(void* outUser, int argc, char** argv, c
 			user->setId(std::stoi(argv[i]));
 		}
 	}
+	return 0;
 }
 
-int DatabaseAccess::topTaggedUserDBCallback(void* outSet, int argc, char** argv, char** azColName)
+int DatabaseAccess::topTaggedUserDBCallback(void* outVector, int argc, char** argv, char** azColName)
 {
-	std::pair<User, int>& pair = { User(0, ""), 0 };
+	std::pair<User, int> pair = { User(0, ""), 0 };
 	for (int i = 0; i < argc; i++)
 	{
 		const std::string& col = azColName[i];
@@ -156,7 +176,8 @@ int DatabaseAccess::topTaggedUserDBCallback(void* outSet, int argc, char** argv,
 			pair.second = std::stoi(argv[i]);
 		}
 	}
-	((std::set<std::pair<User, int>>*)outSet)->insert(pair);
+	((std::vector<std::pair<User, int>>*)outVector)->push_back(pair);
+	return 0;
 }
 
 const std::list<Album> DatabaseAccess::getAlbums()
@@ -192,9 +213,7 @@ void DatabaseAccess::deleteAlbum(const std::string& albumName, int userId)
 bool DatabaseAccess::doesAlbumExists(const std::string& albumName, int userId)
 {
 	const auto& sql = "SELECT COUNT(1) FROM Albums WHERE NAME=\"" + albumName + "\" AND USER_ID=" + std::to_string(userId) + ';';
-	char* countString = nullptr;
-	execQuery(sql.c_str(), singleColumnDBCallback, &countString);
-	return countString[0] != '0'; // count is greater than zero
+	return countQuery(sql.c_str()) > 0;
 }
 
 Album DatabaseAccess::openAlbum(const std::string& albumName)
@@ -271,9 +290,7 @@ void DatabaseAccess::deleteUser(const User& user)
 bool DatabaseAccess::doesUserExists(int userId)
 {
 	const auto& sql = "SELECT COUNT(1) FROM Users WHERE ID=" + std::to_string(userId) + ';';
-	char* countString = nullptr;
-	execQuery(sql.c_str(), singleColumnDBCallback, &countString);
-	return countString[0] != '0'; // count is greater than zero}
+	return countQuery(sql.c_str()) > 0;
 }
 
 User DatabaseAccess::getUser(int userId)
@@ -281,10 +298,41 @@ User DatabaseAccess::getUser(int userId)
 	const auto& sql = "SELECT NAME FROM Users WHERE ID=" + std::to_string(userId) + ';';
 	User user(userId, "");
 	execQuery(sql.c_str(), singleUserDBCallback, &user);
+	if (user.getName().empty())
+	{
+		throw ItemNotFoundException("User", userId);
+	}
 	return user;
 }
 
-inline bool operator<(const std::pair<User, int>& first, const std::pair<User, int>& second)
+int DatabaseAccess::countAlbumsOwnedOfUser(const User& user)
 {
-	return first.second < second.second;
+	const auto& sql = "SELECT COUNT(1) FROM WHERE USER_ID=" + std::to_string(user.getId()) + ';';
+	return countQuery(sql.c_str());
+}
+
+int DatabaseAccess::countAlbumsTaggedOfUser(const User& user)
+{
+	const auto& sql = "SELECT * FROM Albums JOIN PICTURES ON Albums.ID=ALBUM_ID JOIN Tags ON"\
+		"PICTURE_ID=Pictures.ID WHERE Tags.USER_ID=" + std::to_string(user.getId()) + ';';
+	return countQuery(sql.c_str());
+}
+
+int DatabaseAccess::countTagsOfUser(const User& user)
+{
+	const auto& sql = "SELECT COUNT(1) FROM Tags WHERE USER_ID=" + std::to_string(user.getId()) + ';';
+	return countQuery(sql.c_str());
+}
+
+float DatabaseAccess::averageTagsPerAlbumOfUser(const User& user)
+{
+	const auto& sql = "SELECT AVG(C) FROM (SELECT COUNT(1) C FROM Albums JOIN Pictures ON Albums.ID=Pictures.ALBUM_ID"\
+		"JOIN Tags ON PICTURE_ID = Pictures.ID WHERE Tags.USER_ID = " + std::to_string(user.getId()) + "GROUP BY Albums.ID);";
+	char* avgString = nullptr;
+	execQuery(sql.c_str(), singleColumnDBCallback, &avgString);
+	if (avgString == nullptr)
+	{
+		throw MyException("Error getting average");
+	}
+	return std::stof(avgString);
 }

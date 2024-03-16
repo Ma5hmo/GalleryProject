@@ -53,6 +53,8 @@ private:
 	void execQuery(const char* sqlStatement, int(*callback)(void*, int, char**, char**), void* callbackData) const;
 	void createDatabase() const;
 
+	int countQuery(const char* sql) const;
+
 	static int albumListDBCallback(void* albumList, int argc, char** argv, char** azColName);
 	static int singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName);
 	static int singleColumnDBCallback(void* out, int argc, char** argv, char** azColName);
