@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "MemoryAccess.h"
+#include "DatabaseAccess.h"
 #include "AlbumManager.h"
 
 #include <ctime>
@@ -42,7 +42,7 @@ void printWelcome()
 int main(void)
 {
 	// initialization data access
-	MemoryAccess dataAccess;
+	DatabaseAccess dataAccess;
 
 	// initialize album manager
 	AlbumManager albumManager(dataAccess);

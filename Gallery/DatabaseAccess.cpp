@@ -56,3 +56,38 @@ void DatabaseAccess::createDatabase() const
 		std::cerr << "Error creating database: " << e.what() << std::endl;
 	}
 }
+
+void DatabaseAccess::deleteAlbum(const std::string& albumName, int userId)
+{
+	const auto& sql = "DELETE FROM Albums WHERE USER_ID=" + std::to_string(userId) +
+		" AND NAME=" + albumName + ';';
+	execStatement(sql.c_str());
+}
+
+void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
+{
+	const auto& sql = "INSERT INTO Tags(PICTURE_ID, USER_ID) SELECT Pictures.ID, " + std::to_string(userId)
+		+ " FROM Pictures JOIN Albums ON Pictures.ALBUM_ID=Albums.ID WHERE Pictures.NAME = \"" + pictureName
+		+ "\" AND Albums.NAME=\"" + albumName + "\";";
+	execStatement(sql.c_str());
+}
+
+void DatabaseAccess::untagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
+{
+	const auto& sql = "DELETE FROM Tags JOIN Pictures ON Pictures.ID=Tags.PICTURE_ID JOIN Albums ON Pictures.ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
+		+ "\" AND Pictures.NAME=\"" + pictureName + "\" AND Tags.USER_ID=" + std::to_string(userId) + ';';
+	execStatement(sql.c_str());
+}
+
+void DatabaseAccess::createUser(User& user)
+{
+	const auto& sql = "INSERT INTO Users(ID, NAME) VALUES (" + std::to_string(user.getId()) + ", \""
+		+ user.getName() + "\");";
+	execStatement(sql.c_str());
+}
+
+void DatabaseAccess::deleteUser(const User& user)
+{
+	const auto& sql = "DELETE FROM Users WHERE ID=" + std::to_string(user.getId()) + ';';
+	execStatement(sql.c_str());
+}

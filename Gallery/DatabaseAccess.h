@@ -47,7 +47,6 @@ public:
 	void close() override;
 	void clear() override;
 
-
 private:
 	bool execStatement(const char* sqlStatement) const;
 	void createDatabase() const;
