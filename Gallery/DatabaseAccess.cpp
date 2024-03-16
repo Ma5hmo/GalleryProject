@@ -166,6 +166,21 @@ void DatabaseAccess::printAlbums()
 	}
 }
 
+void DatabaseAccess::addPictureToAlbumByName(const std::string& albumName, const Picture& picture)
+{
+	const auto& sql = "INSERT INTO Pictures(NAME, LOCATION, CREATION_DATE, ALBUM_ID) SELECT \"" + picture.getName()
+		+ "\", \"" + picture.getPath() + "\", \"" + picture.getCreationDate()
+		+ "\", ID FROM Albums where NAME=\"" + albumName + "\";";
+	execStatement(sql.c_str());
+}
+
+void DatabaseAccess::removePictureFromAlbumByName(const std::string& albumName, const std::string& pictureName)
+{
+	const auto& sql = "DELETE FROM Pictures JOIN Albums ON ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
+		+ "\" AND Pictures.NAME=\"" + pictureName + "\";";
+	execStatement(sql.c_str());
+}
+
 void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
 {
 	const auto& sql = "INSERT INTO Tags(PICTURE_ID, USER_ID) SELECT Pictures.ID, " + std::to_string(userId)
