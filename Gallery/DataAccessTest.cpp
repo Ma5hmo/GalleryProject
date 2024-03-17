@@ -106,3 +106,28 @@ void DataAccessTest::updateRows()
 		std::cerr << "FAILED! Error - " << e.what() << std::endl;
 	}
 }
+
+void DataAccessTest::removeRows()
+{
+	try
+	{
+		std::cout << "Deleting album2:" << std::endl;
+		_dba.deleteAlbum("album2", 2);
+		std::cout << "SUCCESS!" << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "FAILED! Error - " << e.what() << std::endl;
+	}
+
+	try
+	{
+		std::cout << "Deleting user2:" << std::endl;
+		_dba.deleteUser(User(2, "user2"));
+		std::cout << "SUCCESS!" << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "FAILED! Error - " << e.what() << std::endl;
+	}
+}

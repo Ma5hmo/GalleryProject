@@ -10,6 +10,7 @@ public:
 	void createTables();
 	void addRows();
 	void updateRows();
+	void removeRows();
 
 private:
 	static const char* _dbFileName;

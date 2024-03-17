@@ -52,6 +52,9 @@ int main(void)
 
 	std::cout << "--UPDATE ROWS TEST--" << std::endl;
 	tester.addRows();
+
+	std::cout << "--DELETE ROWS TEST--" << std::endl;
+	tester.removeRows();
 }
 /* {
 	// initialization data access
