@@ -27,3 +27,33 @@ void DataAccessTest::createTables()
 		std::cerr << "FAILED! Error - " << e.what() << std::endl;
 	}
 }
+
+void DataAccessTest::addUsers()
+{
+	std::cout << "Adding users and albums:" << std::endl;
+	for (int i = 1; i <= 3; i++)
+	{
+		try
+		{
+			std::cout << "\tCreating user " << i << ":" << std::endl;
+			_dba.createUser(User(i, "user" + std::to_string(i)));
+			std::cout << "SUCCESS!" << std::endl;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "FAILED! Error - " << e.what() << std::endl;
+		}
+		Album album(i, "album" + std::to_string(i));
+		album.setCreationDateNow();
+		for (int j = 1; j <= 2; j++)
+		{
+			const auto& id = std::to_string(i) + std::to_string(j);
+			Picture pic(std::stoi(id), "pic" + id, "C:/Pictures/" + id + ".png", "");
+			pic.setCreationDateNow();
+			pic.tagUser(i % 3 + 1);
+			pic.tagUser((i % 3 + 2) % 3);
+			album.addPicture(pic);
+		}
+		_dba.createAlbum(album);
+	}
+}
