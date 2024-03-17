@@ -3,6 +3,8 @@
 #include "DatabaseAccess.h"
 #include "AlbumManager.h"
 
+#include "DataAccessTest.h"
+
 #include <ctime>
 #include <chrono>
 
@@ -41,6 +43,20 @@ void printWelcome()
 
 int main(void)
 {
+	DataAccessTest tester;
+	std::cout << "--CREATE TABLES TEST--" << std::endl;
+	tester.createTables();
+	
+	std::cout << "--ADD ROWS TEST--" << std::endl;
+	tester.addRows();
+
+	std::cout << "--UPDATE ROWS TEST--" << std::endl;
+	tester.addRows();
+
+	std::cout << "--DELETE ROWS TEST--" << std::endl;
+	tester.removeRows();
+}
+/* {
 	// initialization data access
 	DatabaseAccess dataAccess;
 
@@ -62,6 +78,6 @@ int main(void)
 			std::cout << e.what() << std::endl;
 		}
 	} while (true);
-}
+}*/
 
 
