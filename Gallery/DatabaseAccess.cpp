@@ -7,10 +7,13 @@
 #include "ItemNotFoundException.h"
 #include "SQLException.h"
 
-const char* DatabaseAccess::DBFILENAME = "galleryDB.sqlite";
-
 DatabaseAccess::DatabaseAccess()
-	: _db(nullptr)
+	: _db(nullptr), _dbFileName("galleryDB.sqlite")
+{
+}
+
+DatabaseAccess::DatabaseAccess(const std::string& DBFileName)
+	: _db(nullptr), _dbFileName(DBFileName.c_str())
 {
 }
 
@@ -40,8 +43,8 @@ std::list<Picture> DatabaseAccess::getTaggedPicturesOfUser(const User& user)
 
 bool DatabaseAccess::open()
 {
-	bool fileExists = _access(DBFILENAME, 0) == 0;
-	int res = sqlite3_open(DBFILENAME, &_db);
+	bool fileExists = _access(_dbFileName, 0) == 0;
+	int res = sqlite3_open(_dbFileName, &_db);
 	if (res != SQLITE_OK) {
 		_db = nullptr;
 		throw SQLException("Error opening database");

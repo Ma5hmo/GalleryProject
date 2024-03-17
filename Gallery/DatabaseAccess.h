@@ -7,6 +7,7 @@ class DatabaseAccess : public IDataAccess
 
 public:
 	DatabaseAccess();
+	DatabaseAccess(const std::string& DBFileName);
 	virtual ~DatabaseAccess() = default;
 
 	// album related
@@ -63,6 +64,6 @@ private:
 	static int singlePictureDBCallback(void* outPicture, int argc, char** argv, char** azColName);
 	static int pictureListDBCallback(void* pictureList, int argc, char** argv, char** azColName);
 
-	static const char* DBFILENAME;
+	const char* _dbFileName;
 	sqlite3* _db;
 };
