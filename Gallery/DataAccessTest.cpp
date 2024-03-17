@@ -54,6 +54,15 @@ void DataAccessTest::addRows()
 			pic.tagUser((i % 3 + 2) % 3);
 			album.addPicture(pic);
 		}
-		_dba.createAlbum(album);
+		try
+		{
+			std::cout << "\tCreating album " << i << ":" << std::endl;
+			_dba.createAlbum(album);
+			std::cout << "SUCCESS!" << std::endl;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "FAILED! Error - " << e.what() << std::endl;
+		}
 	}
 }
