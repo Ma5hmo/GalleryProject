@@ -8,7 +8,7 @@ public:
 	~DataAccessTest();
 
 	void createTables();
-	void addUsers();
+	void addRows();
 
 private:
 	static const char* _dbFileName;

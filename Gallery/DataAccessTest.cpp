@@ -28,7 +28,7 @@ void DataAccessTest::createTables()
 	}
 }
 
-void DataAccessTest::addUsers()
+void DataAccessTest::addRows()
 {
 	std::cout << "Adding users and albums:" << std::endl;
 	for (int i = 1; i <= 3; i++)
