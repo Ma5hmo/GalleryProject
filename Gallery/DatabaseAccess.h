@@ -60,8 +60,8 @@ private:
 	static int singleColumnDBCallback(void* out, int argc, char** argv, char** azColName);
 	static int printUserDBCallback(void*, int argc, char** argv, char** azColName);
 	static int singleUserDBCallback(void* outUser, int argc, char** argv, char** azColName);
-
-	static int topTaggedUserDBCallback(void* outPair, int argc, char** argv, char** azColName);
+	static int singlePictureDBCallback(void* outPicture, int argc, char** argv, char** azColName);
+	static int pictureListDBCallback(void* pictureList, int argc, char** argv, char** azColName);
 
 	static const char* DBFILENAME;
 	sqlite3* _db;

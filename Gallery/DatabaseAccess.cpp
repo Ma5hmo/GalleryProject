@@ -16,24 +16,30 @@ DatabaseAccess::DatabaseAccess()
 
 User DatabaseAccess::getTopTaggedUser()
 {
-	std::vector<std::pair<User, int>> usersCount;
-	auto sql = "SELECT Users.ID ID, Users.NAME NAME, COUNT(1) COUNT FROM Tags JOIN Users on USER_ID=Users.ID GROUP BY Users.ID;";
-	execQuery(sql, topTaggedUserDBCallback, &usersCount);
-	std::sort(usersCount.begin(), usersCount.end());
-	return usersCount.begin()->first;
+	User user(0, "");
+	auto sql = "SELECT Users.ID ID, Users.NAME NAME FROM Tags JOIN Users on USER_ID=Users.ID GROUP BY Users.ID ORDER BY COUNT(1) DESC LIMIT 1;";
+	execQuery(sql, singleUserDBCallback, &user);
+	return user;
 }
 
 bool DatabaseAccess::open()
 {
-	int res = sqlite3_open(DBFILENAME, &_db);
 	bool fileExists = _access(DBFILENAME, 0) == 0;
+	int res = sqlite3_open(DBFILENAME, &_db);
 	if (res != SQLITE_OK) {
 		_db = nullptr;
-		return false;
+		throw SQLException("Error opening database");
 	}
 	if (!fileExists)
 	{
-		createDatabase();
+		try
+		{
+			createDatabase();
+		}
+		catch (const SQLException& e)
+		{
+			std::cerr << "Error creating database: " << e.what() << std::endl;
+		}
 	}
 	return true;
 }
@@ -68,20 +74,15 @@ void DatabaseAccess::execQuery(const char* sqlStatement, int(*callback)(void*, i
 
 void DatabaseAccess::createDatabase() const
 {
-	const char* usersQuery = "CREATE TABLE Users (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL);";
+	const char* usersQuery = "CREATE TABLE Users(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL);";
 	const char* albumsQuery = "CREATE TABLE Albums(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL, CREATION_DATE TEXT NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
-	const char* picturesQuery = "CREATE TABLE Pictures (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUMS_ID INTEGER NOT NULL,FOREIGN KEY(ALBUMS_ID) REFERENCES Albums(ID));";
-	const char* tagsQuery = "CREATE TABLE Tags (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, PICTURE_ID INTEGER NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(PICTURE_ID) REFERENCES Pictures(ID), FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
-	try {
-		execStatement(usersQuery);
-		execStatement(albumsQuery);
-		execStatement(picturesQuery);
-		execStatement(tagsQuery);
-	}
-	catch (const SQLException& e)
-	{
-		std::cerr << "Error creating database: " << e.what() << std::endl;
-	}
+	const char* picturesQuery = "CREATE TABLE Pictures(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUMS_ID INTEGER NOT NULL,FOREIGN KEY(ALBUMS_ID) REFERENCES Albums(ID));";
+	const char* tagsQuery = "CREATE TABLE Tags(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, PICTURE_ID INTEGER NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(PICTURE_ID) REFERENCES Pictures(ID), FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
+
+	execStatement(usersQuery);
+	execStatement(albumsQuery);
+	execStatement(picturesQuery);
+	execStatement(tagsQuery);
 }
 
 int DatabaseAccess::countQuery(const char* sql) const
@@ -157,26 +158,41 @@ int DatabaseAccess::singleUserDBCallback(void* outUser, int argc, char** argv, c
 	return 0;
 }
 
-int DatabaseAccess::topTaggedUserDBCallback(void* outVector, int argc, char** argv, char** azColName)
+int DatabaseAccess::singlePictureDBCallback(void* outPicture, int argc, char** argv, char** azColName)
 {
-	std::pair<User, int> pair = { User(0, ""), 0 };
+	Picture* pic = (Picture*)outPicture;
 	for (int i = 0; i < argc; i++)
 	{
 		const std::string& col = azColName[i];
 		if (col == "NAME")
 		{
-			pair.first.setName(argv[i]);
+			pic->setName(argv[i]);
 		}
 		else if (col == "ID")
 		{
-			pair.first.setId(std::stoi(argv[i]));
+			pic->setId(std::stoi(argv[i]));
 		}
-		else if (col == "COUNT")
+		else if (col == "CREATION_DATE")
 		{
-			pair.second = std::stoi(argv[i]);
+			pic->setCreationDate(argv[i]);
+		}
+		else if (col == "LOCATION")
+		{
+			pic->setPath(argv[i]);
+		}
+		else if (col == "USER_ID")
+		{
+			pic->tagUser(std::stoi(argv[i]));
 		}
 	}
-	((std::vector<std::pair<User, int>>*)outVector)->push_back(pair);
+	return 0;
+}
+
+int DatabaseAccess::pictureListDBCallback(void* pictureList, int argc, char** argv, char** azColName)
+{
+	Picture p(0, "");
+	singlePictureDBCallback(&p, argc, argv, azColName);
+	((std::list<Picture>*) pictureList)->push_back(p);
 	return 0;
 }
 
