@@ -66,3 +66,43 @@ void DataAccessTest::addRows()
 		}
 	}
 }
+
+void DataAccessTest::updateRows()
+{
+	Picture pic(69, "my femily", "C:/Pictures/myfamily.png", "");
+	pic.setCreationDateNow();
+	try
+	{
+		std::cout << "Adding mistaken picture:" << std::endl;
+		_dba.addPictureToAlbumByName("album1", pic);
+		std::cout << "SUCCESS!" << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "FAILED! Error - " << e.what() << std::endl;
+	}
+
+	try
+	{
+		std::cout << "Removing mistaken picture:" << std::endl;
+		_dba.removePictureFromAlbumByName("album1", "my femily");
+		std::cout << "SUCCESS!" << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "FAILED! Error - " << e.what() << std::endl;
+	}
+
+	pic.setName("My Family");
+
+	try
+	{
+		std::cout << "Adding working picture:" << std::endl;
+		_dba.addPictureToAlbumByName("album1", pic);
+		std::cout << "SUCCESS!" << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "FAILED! Error - " << e.what() << std::endl;
+	}
+}

@@ -9,6 +9,7 @@ public:
 
 	void createTables();
 	void addRows();
+	void updateRows();
 
 private:
 	static const char* _dbFileName;

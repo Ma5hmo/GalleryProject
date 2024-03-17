@@ -49,6 +49,9 @@ int main(void)
 	
 	std::cout << "--ADD ROWS TEST--" << std::endl;
 	tester.addRows();
+
+	std::cout << "--UPDATE ROWS TEST--" << std::endl;
+	tester.addRows();
 }
 /* {
 	// initialization data access
