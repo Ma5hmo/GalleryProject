@@ -22,6 +22,22 @@ User DatabaseAccess::getTopTaggedUser()
 	return user;
 }
 
+Picture DatabaseAccess::getTopTaggedPicture()
+{
+	Picture p(0, "");
+	auto sql = "SELECT * FROM Tags JOIN Pictures ON Pictures.ID=PICTURE_ID WHERE PICTURE_ID=(SELECT PICTURE_ID FROM Tags GROUP BY PICTURE_ID ORDER BY COUNT(1) DESC LIMIT 1);";
+	execQuery(sql, singlePictureDBCallback, &p);
+	return p;
+}
+
+std::list<Picture> DatabaseAccess::getTaggedPicturesOfUser(const User& user)
+{
+	const auto& sql = "SELECT * FROM Pictures JOIN Tags ON Pictures.ID=PICTURE_ID WHERE Tags.USER_ID=" + std::to_string(user.getId()) + ';';
+	std::list<Picture> ans;
+	execQuery(sql.c_str(), pictureListDBCallback, &ans);
+	return ans;
+}
+
 bool DatabaseAccess::open()
 {
 	bool fileExists = _access(DBFILENAME, 0) == 0;
