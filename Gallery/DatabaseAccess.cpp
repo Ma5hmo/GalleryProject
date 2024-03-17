@@ -103,12 +103,13 @@ void DatabaseAccess::createDatabase() const
 
 int DatabaseAccess::countQuery(const char* sql) const
 {
-	char* countString = nullptr;
+	std::string countString;
 	execQuery(sql, singleColumnDBCallback, &countString);
-	if (countString == nullptr)
+	if (countString.empty())
 	{
 		throw MyException("Error counting albums");
 	}
+	std::cout << "NIGGER " << countString << std::endl;
 	return std::stoi(countString);
 }
 
@@ -144,7 +145,7 @@ int DatabaseAccess::singleAlbumDBCallback(void* outAlbum, int argc, char** argv,
 
 int DatabaseAccess::singleColumnDBCallback(void* out, int argc, char** argv, char** azColName)
 {
-	*((char**)out) = argv[0];
+	*((std::string*)out) = argv[0];
 	return 0;
 }
 
@@ -360,9 +361,9 @@ float DatabaseAccess::averageTagsPerAlbumOfUser(const User& user)
 {
 	const auto& sql = "SELECT AVG(C) FROM (SELECT COUNT(1) C FROM Albums JOIN Pictures ON Albums.ID=Pictures.ALBUM_ID"\
 		"JOIN Tags ON PICTURE_ID = Pictures.ID WHERE Tags.USER_ID = " + std::to_string(user.getId()) + "GROUP BY Albums.ID);";
-	char* avgString = nullptr;
+	std::string avgString;
 	execQuery(sql.c_str(), singleColumnDBCallback, &avgString);
-	if (avgString == nullptr)
+	if (avgString.empty())
 	{
 		throw MyException("Error getting average");
 	}
