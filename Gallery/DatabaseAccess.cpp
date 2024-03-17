@@ -12,8 +12,8 @@ DatabaseAccess::DatabaseAccess()
 {
 }
 
-DatabaseAccess::DatabaseAccess(const std::string& DBFileName)
-	: _db(nullptr), _dbFileName(DBFileName.c_str())
+DatabaseAccess::DatabaseAccess(const char* DBFileName)
+	: _db(nullptr), _dbFileName(DBFileName)
 {
 }
 

@@ -1,8 +1,16 @@
 #pragma once
+#include "DatabaseAccess.h"
+
 class DataAccessTest
 {
 public:
-	static void createTables();
+	DataAccessTest();
+	~DataAccessTest();
 
+	void createTables();
+
+private:
+	static const char* _dbFileName;
+	DatabaseAccess _dba;
 };
 

@@ -7,7 +7,7 @@ class DatabaseAccess : public IDataAccess
 
 public:
 	DatabaseAccess();
-	DatabaseAccess(const std::string& DBFileName);
+	DatabaseAccess(const char* DBFileName);
 	virtual ~DatabaseAccess() = default;
 
 	// album related
