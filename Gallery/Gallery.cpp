@@ -51,7 +51,7 @@ int main(void)
 	tester.addRows();
 
 	std::cout << "--UPDATE ROWS TEST--" << std::endl;
-	tester.addRows();
+	tester.updateRows();
 
 	std::cout << "--DELETE ROWS TEST--" << std::endl;
 	tester.removeRows();
