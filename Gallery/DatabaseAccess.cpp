@@ -96,10 +96,10 @@ void DatabaseAccess::execQuery(const char* sqlStatement, int(*callback)(void*, i
 
 void DatabaseAccess::createDatabase() const
 {
-	const char* usersQuery = "CREATE TABLE Users(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL);";
-	const char* albumsQuery = "CREATE TABLE Albums(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL, CREATION_DATE TEXT NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
-	const char* picturesQuery = "CREATE TABLE Pictures(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUM_ID INTEGER NOT NULL,FOREIGN KEY(ALBUMS_ID) REFERENCES Albums(ID));";
-	const char* tagsQuery = "CREATE TABLE Tags(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, PICTURE_ID INTEGER NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(PICTURE_ID) REFERENCES Pictures(ID), FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
+	const char* usersQuery = "CREATE TABLE Users(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL);";
+	const char* albumsQuery = "CREATE TABLE Albums(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,USER_ID INTEGER NOT NULL,FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
+	const char* picturesQuery = "CREATE TABLE Pictures(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUM_ID INTEGER NOT NULL,FOREIGN KEY(ALBUM_ID) REFERENCES Albums(ID));";
+	const char* tagsQuery = "CREATE TABLE Tags(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,PICTURE_ID INTEGER NOT NULL,USER_ID INTEGER NOT NULL,FOREIGN KEY(PICTURE_ID) REFERENCES Pictures(ID),FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
 
 	execStatement(usersQuery);
 	execStatement(albumsQuery);
@@ -287,8 +287,8 @@ void DatabaseAccess::addPictureToAlbumByName(const std::string& albumName, const
 
 void DatabaseAccess::removePictureFromAlbumByName(const std::string& albumName, const std::string& pictureName)
 {
-	const auto& sql = "delete from pictures where ID in (select p.ID from pictures p join albums a\
-on p.album_id=a.id where p.name=\"" + pictureName + "\" and a.name=\"" + albumName + "\");";
+	const auto& sql = "DELETE FROM Pictures WHERE ID IN (SELECT p.ID from Pictures p JOIN Albums a\
+ ON p.ALBUM_ID=a.ID WHERE p.NAME=\"" + pictureName + "\" AND a.NAME=\"" + albumName + "\");";
 	execStatement(sql.c_str());
 }
 
@@ -302,7 +302,8 @@ void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::s
 
 void DatabaseAccess::untagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
 {
-	const auto& sql = "DELETE FROM Tags JOIN Pictures ON Pictures.ID=Tags.PICTURE_ID JOIN Albums ON Pictures.ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
+	const auto& sql = "DELETE FROM Tags JOIN Pictures ON Pictures.ID=Tags.PICTURE_ID JOIN Albums ON\
+ Pictures.ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
 		+ "\" AND Pictures.NAME=\"" + pictureName + "\" AND Tags.USER_ID=" + std::to_string(userId) + ';';
 	execStatement(sql.c_str());
 }
