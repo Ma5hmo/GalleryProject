@@ -116,7 +116,6 @@ int DatabaseAccess::countQuery(const char* sql) const
 	{
 		throw MyException("Error counting albums");
 	}
-	std::cout << "NIGGER " << countString << std::endl;
 	return std::stoi(countString);
 }
 
