@@ -98,7 +98,7 @@ void DatabaseAccess::createDatabase() const
 {
 	const char* usersQuery = "CREATE TABLE Users(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL);";
 	const char* albumsQuery = "CREATE TABLE Albums(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL, CREATION_DATE TEXT NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
-	const char* picturesQuery = "CREATE TABLE Pictures(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUMS_ID INTEGER NOT NULL,FOREIGN KEY(ALBUMS_ID) REFERENCES Albums(ID));";
+	const char* picturesQuery = "CREATE TABLE Pictures(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUM_ID INTEGER NOT NULL,FOREIGN KEY(ALBUMS_ID) REFERENCES Albums(ID));";
 	const char* tagsQuery = "CREATE TABLE Tags(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, PICTURE_ID INTEGER NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(PICTURE_ID) REFERENCES Pictures(ID), FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
 
 	execStatement(usersQuery);
@@ -281,14 +281,14 @@ void DatabaseAccess::addPictureToAlbumByName(const std::string& albumName, const
 {
 	const auto& sql = "INSERT INTO Pictures(NAME, LOCATION, CREATION_DATE, ALBUM_ID) SELECT \"" + picture.getName()
 		+ "\", \"" + picture.getPath() + "\", \"" + picture.getCreationDate()
-		+ "\", ID FROM Albums where NAME=\"" + albumName + "\";";
+		+ "\", ID FROM Albums WHERE NAME=\"" + albumName + "\" LIMIT 1;";
 	execStatement(sql.c_str());
 }
 
 void DatabaseAccess::removePictureFromAlbumByName(const std::string& albumName, const std::string& pictureName)
 {
-	const auto& sql = "DELETE FROM Pictures JOIN Albums ON ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
-		+ "\" AND Pictures.NAME=\"" + pictureName + "\";";
+	const auto& sql = "delete from pictures where ID in (select p.ID from pictures p join albums a\
+on p.album_id=a.id where p.name=\"" + pictureName + "\" and a.name=\"" + albumName + "\");";
 	execStatement(sql.c_str());
 }
 
