@@ -107,7 +107,6 @@
     <ClCompile Include="DatabaseAccess.cpp" />
     <ClCompile Include="MemoryAccess.cpp" />
     <ClCompile Include="Picture.cpp" />
-    <ClCompile Include="sqlite3.c" />
     <ClCompile Include="User.cpp" />
     <ClCompile Include="Gallery.cpp" />
   </ItemGroup>
