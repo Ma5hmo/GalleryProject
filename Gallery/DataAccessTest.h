@@ -7,6 +7,8 @@ public:
 	DataAccessTest();
 	~DataAccessTest();
 
+	void runTests();
+
 	void createTables();
 	void addRows();
 	void updateRows();

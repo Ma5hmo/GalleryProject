@@ -53,20 +53,27 @@ bool DatabaseAccess::open()
 	{
 		try
 		{
-			createDatabase();
+			createDatabase(); // will run "PRAGMA foreign_keys=ON" aswell
 		}
 		catch (const SQLException& e)
 		{
 			std::cerr << "Error creating database: " << e.what() << std::endl;
 		}
 	}
+	else
+	{
+		execStatement("PRAGMA foreign_keys=ON;"); // needs to be run for ON DELETE CASCADE to work
+	}
 	return true;
 }
 
 void DatabaseAccess::close()
 {
-	sqlite3_close(_db);
-	_db = nullptr;
+	if (_db != nullptr)
+	{
+		sqlite3_close(_db);
+		_db = nullptr;
+	}
 }
 
 void DatabaseAccess::clear()
@@ -93,15 +100,12 @@ void DatabaseAccess::execQuery(const char* sqlStatement, int(*callback)(void*, i
 
 void DatabaseAccess::createDatabase() const
 {
-	const char* usersQuery = "CREATE TABLE Users(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL);";
-	const char* albumsQuery = "CREATE TABLE Albums(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, NAME TEXT NOT NULL, CREATION_DATE TEXT NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
-	const char* picturesQuery = "CREATE TABLE Pictures(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUMS_ID INTEGER NOT NULL,FOREIGN KEY(ALBUMS_ID) REFERENCES Albums(ID));";
-	const char* tagsQuery = "CREATE TABLE Tags(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, PICTURE_ID INTEGER NOT NULL, USER_ID INTEGER NOT NULL, FOREIGN KEY(PICTURE_ID) REFERENCES Pictures(ID), FOREIGN KEY(USER_ID) REFERENCES Users(ID))";
-
-	execStatement(usersQuery);
-	execStatement(albumsQuery);
-	execStatement(picturesQuery);
-	execStatement(tagsQuery);
+	auto createQuery = "CREATE TABLE Users(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL);"\
+		"CREATE TABLE Albums(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,USER_ID INTEGER NOT NULL,FOREIGN KEY(USER_ID) REFERENCES Users(ID) ON DELETE CASCADE);"\
+		"CREATE TABLE Pictures(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,NAME TEXT NOT NULL,LOCATION TEXT NOT NULL,CREATION_DATE TEXT NOT NULL,ALBUM_ID INTEGER NOT NULL,FOREIGN KEY(ALBUM_ID) REFERENCES Albums(ID) ON DELETE CASCADE);"\
+		"CREATE TABLE Tags(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,PICTURE_ID INTEGER NOT NULL,USER_ID INTEGER NOT NULL,FOREIGN KEY(PICTURE_ID) REFERENCES Pictures(ID) ON DELETE CASCADE,FOREIGN KEY(USER_ID) REFERENCES Users(ID) ON DELETE CASCADE);"\
+		"PRAGMA	foreign_keys=ON;";
+	execStatement(createQuery);
 }
 
 int DatabaseAccess::countQuery(const char* sql) const
@@ -112,7 +116,6 @@ int DatabaseAccess::countQuery(const char* sql) const
 	{
 		throw MyException("Error counting albums");
 	}
-	std::cout << "NIGGER " << countString << std::endl;
 	return std::stoi(countString);
 }
 
@@ -234,8 +237,8 @@ const std::list<Album> DatabaseAccess::getAlbumsOfUser(const User& user)
 
 void DatabaseAccess::createAlbum(const Album& album)
 {
-	const auto& sql = "INSERT INTO Albums(NAME, CREATION_DATE, USER_ID) VALUES (\"" + album.getName()
-		+ ", \"" + album.getCreationDate() + "\", " + std::to_string(album.getOwnerId()) + ");";
+	auto sql = "INSERT INTO Albums(NAME, CREATION_DATE, USER_ID) VALUES (\"" + album.getName()
+		+ "\", \"" + album.getCreationDate() + "\", " + std::to_string(album.getOwnerId()) + ");";
 	execStatement(sql.c_str());
 }
 
@@ -278,14 +281,14 @@ void DatabaseAccess::addPictureToAlbumByName(const std::string& albumName, const
 {
 	const auto& sql = "INSERT INTO Pictures(NAME, LOCATION, CREATION_DATE, ALBUM_ID) SELECT \"" + picture.getName()
 		+ "\", \"" + picture.getPath() + "\", \"" + picture.getCreationDate()
-		+ "\", ID FROM Albums where NAME=\"" + albumName + "\";";
+		+ "\", ID FROM Albums WHERE NAME=\"" + albumName + "\" LIMIT 1;";
 	execStatement(sql.c_str());
 }
 
 void DatabaseAccess::removePictureFromAlbumByName(const std::string& albumName, const std::string& pictureName)
 {
-	const auto& sql = "DELETE FROM Pictures JOIN Albums ON ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
-		+ "\" AND Pictures.NAME=\"" + pictureName + "\";";
+	const auto& sql = "DELETE FROM Pictures WHERE ID IN (SELECT p.ID from Pictures p JOIN Albums a\
+ ON p.ALBUM_ID=a.ID WHERE p.NAME=\"" + pictureName + "\" AND a.NAME=\"" + albumName + "\");";
 	execStatement(sql.c_str());
 }
 
@@ -299,7 +302,8 @@ void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::s
 
 void DatabaseAccess::untagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
 {
-	const auto& sql = "DELETE FROM Tags JOIN Pictures ON Pictures.ID=Tags.PICTURE_ID JOIN Albums ON Pictures.ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
+	const auto& sql = "DELETE FROM Tags JOIN Pictures ON Pictures.ID=Tags.PICTURE_ID JOIN Albums ON\
+ Pictures.ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
 		+ "\" AND Pictures.NAME=\"" + pictureName + "\" AND Tags.USER_ID=" + std::to_string(userId) + ';';
 	execStatement(sql.c_str());
 }

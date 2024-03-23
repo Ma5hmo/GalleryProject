@@ -1,5 +1,6 @@
 #include "DataAccessTest.h"
 #include <cstdio>
+#include "SQLException.h"
 
 const char* DataAccessTest::_dbFileName = "testDB.sqlite";
 
@@ -12,6 +13,21 @@ DataAccessTest::DataAccessTest()
 DataAccessTest::~DataAccessTest()
 {
 	_dba.close();
+}
+
+void DataAccessTest::runTests()
+{
+	std::cout << "--CREATE TABLES TEST--" << std::endl;
+	createTables();
+
+	std::cout << "--ADD ROWS TEST--" << std::endl;
+	addRows();
+
+	std::cout << "--UPDATE ROWS TEST--" << std::endl;
+	updateRows();
+
+	std::cout << "--DELETE ROWS TEST--" << std::endl;
+	removeRows();
 }
 
 void DataAccessTest::createTables()
@@ -113,6 +129,10 @@ void DataAccessTest::removeRows()
 	{
 		std::cout << "Deleting album2:" << std::endl;
 		_dba.deleteAlbum("album2", 2);
+		if (_dba.doesAlbumExists("album2", 2) == true)
+		{
+			throw SQLException("album still exists after deletion");
+		}
 		std::cout << "SUCCESS!" << std::endl;
 	}
 	catch (const std::exception& e)
