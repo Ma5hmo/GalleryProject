@@ -110,13 +110,9 @@ void DatabaseAccess::createDatabase() const
 
 int DatabaseAccess::countQuery(const char* sql) const
 {
-	std::string countString;
-	execQuery(sql, singleColumnDBCallback, &countString);
-	if (countString.empty())
-	{
-		throw MyException("Error counting albums");
-	}
-	return std::stoi(countString);
+	int count;
+	execQuery(sql, singleIntDBCallback, &count);
+	return count;
 }
 
 int DatabaseAccess::albumListDBCallback(void* albumList, int argc, char** argv, char** azColName)
@@ -149,9 +145,15 @@ int DatabaseAccess::singleAlbumDBCallback(void* outAlbum, int argc, char** argv,
 	return 0;
 }
 
-int DatabaseAccess::singleColumnDBCallback(void* out, int argc, char** argv, char** azColName)
+int DatabaseAccess::singleFloatDBCallback(void* out, int argc, char** argv, char** azColName)
 {
-	*((std::string*)out) = argv[0];
+	*((float*)out) = std::stof(argv[0]);
+	return 0;
+}
+
+int DatabaseAccess::singleIntDBCallback(void* out, int argc, char** argv, char** azColName)
+{
+	*((int*)out) = std::stoi(argv[0]);
 	return 0;
 }
 
@@ -316,9 +318,11 @@ void DatabaseAccess::printUsers()
 
 void DatabaseAccess::createUser(User& user)
 {
-	const auto& sql = "INSERT INTO Users(ID, NAME) VALUES (" + std::to_string(user.getId()) + ", \""
-		+ user.getName() + "\");";
-	execStatement(sql.c_str());
+	const auto& sql = "INSERT INTO Users(NAME) VALUES (" + user.getName() + "\");"\
+		"SELECT last_insert_rowid()";
+	int lastId;
+	execQuery(sql.c_str(), singleIntDBCallback, &lastId);
+
 }
 
 void DatabaseAccess::deleteUser(const User& user)
@@ -368,11 +372,7 @@ float DatabaseAccess::averageTagsPerAlbumOfUser(const User& user)
 {
 	const auto& sql = "SELECT AVG(C) FROM (SELECT COUNT(1) C FROM Albums JOIN Pictures ON Albums.ID=Pictures.ALBUM_ID"\
 		"JOIN Tags ON PICTURE_ID = Pictures.ID WHERE Tags.USER_ID = " + std::to_string(user.getId()) + "GROUP BY Albums.ID);";
-	std::string avgString;
-	execQuery(sql.c_str(), singleColumnDBCallback, &avgString);
-	if (avgString.empty())
-	{
-		throw MyException("Error getting average");
-	}
-	return std::stof(avgString);
+	float avg;
+	execQuery(sql.c_str(), singleFloatDBCallback, &avg);
+	return avg;
 }
