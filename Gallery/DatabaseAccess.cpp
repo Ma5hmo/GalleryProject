@@ -1,4 +1,6 @@
 #include "DatabaseAccess.h"
+#include "Constants.h"
+
 #include "io.h"
 #include <vector>
 #include <algorithm>
@@ -8,7 +10,7 @@
 #include "SQLException.h"
 
 DatabaseAccess::DatabaseAccess()
-	: _db(nullptr), _dbFileName("galleryDB.sqlite")
+	: _db(nullptr), _dbFileName(DEFAULT_DB_FILE_NAME)
 {
 }
 
