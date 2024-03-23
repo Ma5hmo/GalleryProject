@@ -237,7 +237,7 @@ const std::list<Album> DatabaseAccess::getAlbumsOfUser(const User& user)
 
 void DatabaseAccess::createAlbum(const Album& album)
 {
-	const auto& sql = "INSERT INTO Albums(NAME, CREATION_DATE, USER_ID) VALUES (\"" + album.getName()
+	auto sql = "INSERT INTO Albums(NAME, CREATION_DATE, USER_ID) VALUES (\"" + album.getName()
 		+ "\", \"" + album.getCreationDate() + "\", " + std::to_string(album.getOwnerId()) + ");";
 	execStatement(sql.c_str());
 }

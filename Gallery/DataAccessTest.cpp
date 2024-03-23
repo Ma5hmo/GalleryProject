@@ -15,6 +15,21 @@ DataAccessTest::~DataAccessTest()
 	_dba.close();
 }
 
+void DataAccessTest::runTests()
+{
+	std::cout << "--CREATE TABLES TEST--" << std::endl;
+	createTables();
+
+	std::cout << "--ADD ROWS TEST--" << std::endl;
+	addRows();
+
+	std::cout << "--UPDATE ROWS TEST--" << std::endl;
+	updateRows();
+
+	std::cout << "--DELETE ROWS TEST--" << std::endl;
+	removeRows();
+}
+
 void DataAccessTest::createTables()
 {
 	std::cout << "Testing table creation..." << std::endl;
