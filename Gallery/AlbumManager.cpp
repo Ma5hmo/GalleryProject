@@ -3,11 +3,10 @@
 #include "Constants.h"
 #include "MyException.h"
 #include "AlbumNotOpenException.h"
-#include "SQLException.h"
 
 
 AlbumManager::AlbumManager(IDataAccess& dataAccess) :
-	m_dataAccess(dataAccess), m_nextPictureId(100), m_nextUserId(200)
+    m_dataAccess(dataAccess), m_nextPictureId(100), m_nextUserId(200)
 {
 	m_dataAccess.open();
 }
@@ -16,9 +15,8 @@ void AlbumManager::executeCommand(CommandType command) {
 	try {
 		AlbumManager::handler_func_t handler = m_commands.at(command);
 		(this->*handler)();
-	}
-	catch (const std::out_of_range&) {
-		throw MyException("Error: Invalid command[" + std::to_string(command) + "]\n");
+	} catch (const std::out_of_range&) {
+			throw MyException("Error: Invalid command[" + std::to_string(command) + "]\n");
 	}
 }
 
@@ -26,7 +24,7 @@ void AlbumManager::printHelp() const
 {
 	std::cout << "Supported Album commands:" << std::endl;
 	std::cout << "*************************" << std::endl;
-
+	
 	for (const struct CommandGroup& group : m_prompts) {
 		std::cout << group.title << std::endl;
 		std::string space(".  ");
@@ -45,16 +43,16 @@ void AlbumManager::createAlbum()
 {
 	std::string userIdStr = getInputFromConsole("Enter user id: ");
 	int userId = std::stoi(userIdStr);
-	if (!m_dataAccess.doesUserExists(userId)) {
-		throw MyException("Error: Can't create album since there is no user with id [" + userIdStr + "]\n");
+	if ( !m_dataAccess.doesUserExists(userId) ) {
+		throw MyException("Error: Can't create album since there is no user with id [" + userIdStr+"]\n");
 	}
 
 	std::string name = getInputFromConsole("Enter album name - ");
-	if (m_dataAccess.doesAlbumExists(name, userId)) {
+	if ( m_dataAccess.doesAlbumExists(name,userId) ) {
 		throw MyException("Error: Failed to create album, album with the same name already exists\n");
 	}
 
-	Album newAlbum(userId, name);
+	Album newAlbum(userId,name);
 	m_dataAccess.createAlbum(newAlbum);
 
 	std::cout << "Album [" << newAlbum.getName() << "] created successfully by user@" << newAlbum.getOwnerId() << std::endl;
@@ -68,17 +66,17 @@ void AlbumManager::openAlbum()
 
 	std::string userIdStr = getInputFromConsole("Enter user id: ");
 	int userId = std::stoi(userIdStr);
-	if (!m_dataAccess.doesUserExists(userId)) {
+	if ( !m_dataAccess.doesUserExists(userId) ) {
 		throw MyException("Error: Can't open album since there is no user with id @" + userIdStr + ".\n");
 	}
 
 	std::string name = getInputFromConsole("Enter album name - ");
-	if (!m_dataAccess.doesAlbumExists(name, userId)) {
-		throw MyException("Error: Failed to open album, since there is no album with name:" + name + ".\n");
+	if ( !m_dataAccess.doesAlbumExists(name, userId) ) {
+		throw MyException("Error: Failed to open album, since there is no album with name:"+name +".\n");
 	}
 
 	m_openAlbum = m_dataAccess.openAlbum(name);
-	m_currentAlbumName = name;
+    m_currentAlbumName = name;
 	// success
 	std::cout << "Album [" << name << "] opened successfully." << std::endl;
 }
@@ -97,23 +95,23 @@ void AlbumManager::deleteAlbum()
 	std::string userIdStr = getInputFromConsole("Enter user id: ");
 	int userId = std::stoi(userIdStr);
 	if (!m_dataAccess.doesUserExists(userId)) {
-		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
+		throw MyException("Error: There is no user with id @" + userIdStr +"\n");
 	}
 
 	std::string albumName = getInputFromConsole("Enter album name - ");
-	if (!m_dataAccess.doesAlbumExists(albumName, userId)) {
+	if ( !m_dataAccess.doesAlbumExists(albumName, userId) ) {
 		throw MyException("Error: Failed to delete album, since there is no album with name:" + albumName + ".\n");
 	}
 
 	// album exist, close album if it is opened
-	if ((isCurrentAlbumSet()) &&
-		(m_openAlbum.getOwnerId() == userId && m_openAlbum.getName() == albumName)) {
+	if ( (isCurrentAlbumSet() ) &&
+		 (m_openAlbum.getOwnerId() == userId && m_openAlbum.getName() == albumName) ) {
 
 		closeAlbum();
 	}
 
 	m_dataAccess.deleteAlbum(albumName, userId);
-	std::cout << "Album [" << albumName << "] @" << userId << " deleted successfully." << std::endl;
+	std::cout << "Album [" << albumName << "] @"<< userId <<" deleted successfully." << std::endl;
 }
 
 void AlbumManager::listAlbums()
@@ -136,7 +134,7 @@ void AlbumManager::listAlbumsOfUser()
 	std::cout << "-----------------------" << std::endl;
 
 	for (const auto& album : albums) {
-		std::cout << "   + [" << album.getName() << "] - created on " << album.getCreationDate() << std::endl;
+		std::cout <<"   + [" << album.getName() <<"] - created on "<< album.getCreationDate() << std::endl;
 	}
 }
 
@@ -147,29 +145,17 @@ void AlbumManager::addPictureToAlbum()
 	refreshOpenAlbum();
 
 	std::string picName = getInputFromConsole("Enter picture name: ");
-	if (m_openAlbum.doesPictureExists(picName)) {
+	if (m_openAlbum.doesPictureExists(picName) ) {
 		throw MyException("Error: Failed to add picture, picture with the same name already exists.\n");
 	}
-
+	
 	Picture picture(++m_nextPictureId, picName);
 	std::string picPath = getInputFromConsole("Enter picture path: ");
 	picture.setPath(picPath);
 
-	for (int i = 0; i < MAX_DB_ACCESS_TRIES; i++)
-	{
-		try
-		{
-			m_dataAccess.addPictureToAlbumByName(m_openAlbum.getName(), picture);
-			std::cout << "Picture [" << picture.getId() << "] successfully added to Album [" << m_openAlbum.getName() << "]." << std::endl;
-			return;
-		}
-		catch (const SQLException&)
-		{
-			picture.setId(++m_nextPictureId);
-		}
-	}
+	m_dataAccess.addPictureToAlbumByName(m_openAlbum.getName(), picture);
 
-	throw MyException("Error: Reached max try amounts for picture addition.\n");
+	std::cout << "Picture [" << picture.getId() << "] successfully added to Album [" << m_openAlbum.getName() << "]." << std::endl;
 }
 
 void AlbumManager::removePictureFromAlbum()
@@ -177,10 +163,10 @@ void AlbumManager::removePictureFromAlbum()
 	refreshOpenAlbum();
 
 	std::string picName = getInputFromConsole("Enter picture name: ");
-	if (!m_openAlbum.doesPictureExists(picName)) {
+	if ( !m_openAlbum.doesPictureExists(picName) ) {
 		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
 	}
-
+	
 	auto picture = m_openAlbum.getPicture(picName);
 	m_dataAccess.removePictureFromAlbumByName(m_openAlbum.getName(), picture.getName());
 	std::cout << "Picture <" << picName << "> successfully removed from Album [" << m_openAlbum.getName() << "]." << std::endl;
@@ -190,14 +176,14 @@ void AlbumManager::listPicturesInAlbum()
 {
 	refreshOpenAlbum();
 
-	std::cout << "List of pictures in Album [" << m_openAlbum.getName()
-		<< "] of user@" << m_openAlbum.getOwnerId() << ":" << std::endl;
-
+	std::cout << "List of pictures in Album [" << m_openAlbum.getName() 
+			  << "] of user@" << m_openAlbum.getOwnerId() <<":" << std::endl;
+	
 	const std::list<Picture>& albumPictures = m_openAlbum.getPictures();
 	for (auto iter = albumPictures.begin(); iter != albumPictures.end(); ++iter) {
-		std::cout << "   + Picture [" << iter->getId() << "] - " << iter->getName() <<
+		std::cout << "   + Picture [" << iter->getId() << "] - " << iter->getName() << 
 			"\tLocation: [" << iter->getPath() << "]\tCreation Date: [" <<
-			iter->getCreationDate() << "]\tTags: [" << iter->getTagsCount() << "]" << std::endl;
+				iter->getCreationDate() << "]\tTags: [" << iter->getTagsCount() << "]" << std::endl;
 	}
 	std::cout << std::endl;
 }
@@ -207,19 +193,19 @@ void AlbumManager::showPicture()
 	refreshOpenAlbum();
 
 	std::string picName = getInputFromConsole("Enter picture name: ");
-	if (!m_openAlbum.doesPictureExists(picName)) {
+	if ( !m_openAlbum.doesPictureExists(picName) ) {
 		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
 	}
-
+	
 	auto pic = m_openAlbum.getPicture(picName);
-	if (!fileExistsOnDisk(pic.getPath())) {
-		throw MyException("Error: Can't open <" + picName + "> since it doesnt exist on disk.\n");
+	if ( !fileExistsOnDisk(pic.getPath()) ) {
+		throw MyException("Error: Can't open <" + picName+ "> since it doesnt exist on disk.\n");
 	}
 
 	// Bad practice!!!
 	// Can lead to privileges escalation
 	// You will replace it on WinApi Lab(bonus)
-	system(pic.getPath().c_str());
+	system(pic.getPath().c_str()); 
 }
 
 void AlbumManager::tagUserInPicture()
@@ -227,15 +213,15 @@ void AlbumManager::tagUserInPicture()
 	refreshOpenAlbum();
 
 	std::string picName = getInputFromConsole("Enter picture name: ");
-	if (!m_openAlbum.doesPictureExists(picName)) {
+	if ( !m_openAlbum.doesPictureExists(picName) ) {
 		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
 	}
-
+	
 	Picture pic = m_openAlbum.getPicture(picName);
-
+	
 	std::string userIdStr = getInputFromConsole("Enter user id to tag: ");
 	int userId = std::stoi(userIdStr);
-	if (!m_dataAccess.doesUserExists(userId)) {
+	if ( !m_dataAccess.doesUserExists(userId) ) {
 		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
 	}
 	User user = m_dataAccess.getUser(userId);
@@ -262,7 +248,7 @@ void AlbumManager::untagUserInPicture()
 	}
 	User user = m_dataAccess.getUser(userId);
 
-	if (!pic.isUserTagged(user)) {
+	if (! pic.isUserTagged(user)) {
 		throw MyException("Error: The user was not tagged! \n");
 	}
 
@@ -276,19 +262,19 @@ void AlbumManager::listUserTags()
 	refreshOpenAlbum();
 
 	std::string picName = getInputFromConsole("Enter picture name: ");
-	if (!m_openAlbum.doesPictureExists(picName)) {
+	if ( !m_openAlbum.doesPictureExists(picName) ) {
 		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
 	}
-	auto pic = m_openAlbum.getPicture(picName);
+	auto pic = m_openAlbum.getPicture(picName); 
 
 	const std::set<int> users = pic.getUserTags();
 
-	if (0 == users.size()) {
+	if ( 0 == users.size() )  {
 		throw MyException("Error: There is no user tegged in <" + picName + ">.\n");
 	}
 
 	std::cout << "Tagged users in picture <" << picName << ">:" << std::endl;
-	for (const int user_id : users) {
+	for (const int user_id: users) {
 		const User user = m_dataAccess.getUser(user_id);
 		std::cout << user << std::endl;
 	}
@@ -302,23 +288,10 @@ void AlbumManager::addUser()
 {
 	std::string name = getInputFromConsole("Enter user name: ");
 
-	User user(++m_nextUserId, name);
-
-	for (int i = 0; i < MAX_DB_ACCESS_TRIES; i++)
-	{
-		try
-		{
-			m_dataAccess.createUser(user);
-			std::cout << "User " << name << " with id @" << user.getId() << " created successfully." << std::endl;
-			return;
-		}
-		catch (const SQLException&)
-		{
-			user.setId(++m_nextUserId);
-		}
-	}
-
-	throw MyException("Error: Reached max try amounts for user addition.\n");
+	User user(++m_nextUserId,name);
+	
+	m_dataAccess.createUser(user);
+	std::cout << "User " << name << " with id @" << user.getId() << " created successfully." << std::endl;
 }
 
 
@@ -327,7 +300,7 @@ void AlbumManager::removeUser()
 	// get user name
 	std::string userIdStr = getInputFromConsole("Enter user id: ");
 	int userId = std::stoi(userIdStr);
-	if (!m_dataAccess.doesUserExists(userId)) {
+	if ( !m_dataAccess.doesUserExists(userId) ) {
 		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
 	}
 	const User& user = m_dataAccess.getUser(userId);
@@ -341,14 +314,14 @@ void AlbumManager::removeUser()
 
 void AlbumManager::listUsers()
 {
-	m_dataAccess.printUsers();
+	m_dataAccess.printUsers();	
 }
 
 void AlbumManager::userStatistics()
 {
 	std::string userIdStr = getInputFromConsole("Enter user id: ");
 	int userId = std::stoi(userIdStr);
-	if (!m_dataAccess.doesUserExists(userId)) {
+	if ( !m_dataAccess.doesUserExists(userId) ) {
 		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
 	}
 
@@ -381,7 +354,7 @@ void AlbumManager::picturesTaggedUser()
 {
 	std::string userIdStr = getInputFromConsole("Enter user id: ");
 	int userId = std::stoi(userIdStr);
-	if (!m_dataAccess.doesUserExists(userId)) {
+	if ( !m_dataAccess.doesUserExists(userId) ) {
 		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
 	}
 
@@ -390,8 +363,8 @@ void AlbumManager::picturesTaggedUser()
 	auto taggedPictures = m_dataAccess.getTaggedPicturesOfUser(user);
 
 	std::cout << "List of pictures that User@" << user.getId() << " tagged :" << std::endl;
-	for (const Picture& picture : taggedPictures) {
-		std::cout << "   + " << picture << std::endl;
+	for (const Picture& picture: taggedPictures) {
+		std::cout <<"   + "<< picture << std::endl;
 	}
 	std::cout << std::endl;
 }
@@ -416,29 +389,29 @@ std::string AlbumManager::getInputFromConsole(const std::string& message)
 		std::cout << message;
 		std::getline(std::cin, input);
 	} while (input.empty());
-
+	
 	return input;
 }
 
 bool AlbumManager::fileExistsOnDisk(const std::string& filename)
 {
-	struct stat buffer;
-	return (stat(filename.c_str(), &buffer) == 0);
+	struct stat buffer;   
+	return (stat(filename.c_str(), &buffer) == 0); 
 }
 
 void AlbumManager::refreshOpenAlbum() {
 	if (!isCurrentAlbumSet()) {
 		throw AlbumNotOpenException();
 	}
-	m_openAlbum = m_dataAccess.openAlbum(m_currentAlbumName);
+    m_openAlbum = m_dataAccess.openAlbum(m_currentAlbumName);
 }
 
 bool AlbumManager::isCurrentAlbumSet() const
 {
-	return !m_currentAlbumName.empty();
+    return !m_currentAlbumName.empty();
 }
 
-const std::vector<struct CommandGroup> AlbumManager::m_prompts = {
+const std::vector<struct CommandGroup> AlbumManager::m_prompts  = {
 	{
 		"Supported Albums Operations:\n----------------------------",
 		{
