@@ -384,14 +384,14 @@ User DatabaseAccess::getUser(int userId)
 
 int DatabaseAccess::countAlbumsOwnedOfUser(const User& user)
 {
-	const auto& sql = "SELECT COUNT(1) FROM WHERE USER_ID=" + std::to_string(user.getId()) + ';';
+	const auto& sql = "SELECT COUNT(1) FROM Albums WHERE USER_ID=" + std::to_string(user.getId()) + ';';
 	return countQuery(sql.c_str());
 }
 
 int DatabaseAccess::countAlbumsTaggedOfUser(const User& user)
 {
-	const auto& sql = "SELECT * FROM Albums JOIN PICTURES ON Albums.ID=ALBUM_ID JOIN Tags ON"\
-		"PICTURE_ID=Pictures.ID WHERE Tags.USER_ID=" + std::to_string(user.getId()) + ';';
+	const auto& sql = "SELECT * FROM Albums a JOIN Pictures p ON Albums.ID=ALBUM_ID JOIN Tags t ON "\
+		"PICTURE_ID=p.ID WHERE t.USER_ID=" + std::to_string(user.getId()) + ';';
 	return countQuery(sql.c_str());
 }
 
