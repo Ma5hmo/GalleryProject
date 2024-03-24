@@ -63,7 +63,7 @@ private:
 	static const std::vector<struct CommandGroup> m_prompts;
 	static const std::map<CommandType, handler_func_t> m_commands;
 
-	PROCESS_INFORMATION showPicPI;
+	static PROCESS_INFORMATION showPicPI;
 
 };
 

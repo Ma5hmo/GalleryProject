@@ -4,6 +4,8 @@
 #include "MyException.h"
 #include "AlbumNotOpenException.h"
 
+PROCESS_INFORMATION AlbumManager::showPicPI = { 0 };
+
 AlbumManager::AlbumManager(IDataAccess& dataAccess) :
     m_dataAccess(dataAccess), m_nextPictureId(100), m_nextUserId(200)
 {
@@ -205,8 +207,10 @@ void AlbumManager::showPicture()
 	std::string cmd = "C:\\Windows\\system32\\mspaint.exe \"" + pic.getPath() + "\"";
 	
 	CreateProcessA(NULL, const_cast<LPSTR>(cmd.c_str()), NULL, NULL, FALSE, 0, NULL, NULL, &si, &showPicPI);
-	SetConsoleCtrlHandler(AlbumManager::CtrlCHandler, true);
+
+	SetConsoleCtrlHandler(CtrlCHandler, true);
 	WaitForSingleObject(showPicPI.hThread, INFINITE);
+	SetConsoleCtrlHandler(NULL, false); // restore default ctrl c handling
 	CloseHandle(showPicPI.hProcess);
 	CloseHandle(showPicPI.hThread);
 }
