@@ -4,7 +4,6 @@
 #include "MyException.h"
 #include "AlbumNotOpenException.h"
 
-
 AlbumManager::AlbumManager(IDataAccess& dataAccess) :
     m_dataAccess(dataAccess), m_nextPictureId(100), m_nextUserId(200)
 {
@@ -202,10 +201,24 @@ void AlbumManager::showPicture()
 		throw MyException("Error: Can't open <" + picName+ "> since it doesnt exist on disk.\n");
 	}
 
-	// Bad practice!!!
-	// Can lead to privileges escalation
-	// You will replace it on WinApi Lab(bonus)
-	system(pic.getPath().c_str()); 
+	STARTUPINFO si = { 0 };
+	std::string cmd = "C:\\Windows\\system32\\mspaint.exe \"" + pic.getPath() + "\"";
+	
+	CreateProcessA(NULL, const_cast<LPSTR>(cmd.c_str()), NULL, NULL, FALSE, 0, NULL, NULL, &si, &showPicPI);
+	SetConsoleCtrlHandler(AlbumManager::CtrlCHandler, true);
+	WaitForSingleObject(showPicPI.hThread, INFINITE);
+	CloseHandle(showPicPI.hProcess);
+	CloseHandle(showPicPI.hThread);
+}
+
+BOOL WINAPI AlbumManager::CtrlCHandler(DWORD fdwCtrlType)
+{
+	if (fdwCtrlType == CTRL_C_EVENT)
+	{
+		TerminateProcess(showPicPI.hProcess, 0);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 void AlbumManager::tagUserInPicture()
