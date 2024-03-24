@@ -46,5 +46,3 @@ struct CommandGroup {
 	const std::string title;
 	const std::vector<struct CommandPrompt> commands;
 };
-
-const char* DEFAULT_DB_FILE_NAME = "galleryDB.sqlite";
