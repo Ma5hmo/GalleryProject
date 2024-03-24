@@ -351,8 +351,8 @@ void DatabaseAccess::printUsers()
 
 void DatabaseAccess::createUser(User& user)
 {
-	const auto& sql = "INSERT INTO Users(NAME) VALUES (" + user.getName() + "\");"\
-		"SELECT last_insert_rowid()";
+	const auto& sql = "INSERT INTO Users(NAME) VALUES (\"" + user.getName() + "\");"\
+		"SELECT last_insert_rowid();";
 	int lastId;
 	execQuery(sql.c_str(), singleIntDBCallback, &lastId);
 	user.setId(lastId);
