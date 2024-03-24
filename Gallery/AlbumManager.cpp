@@ -8,7 +8,6 @@
 AlbumManager::AlbumManager(IDataAccess& dataAccess) :
     m_dataAccess(dataAccess), m_nextPictureId(100), m_nextUserId(200)
 {
-	// Left empty
 	m_dataAccess.open();
 }
 

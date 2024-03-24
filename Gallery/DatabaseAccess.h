@@ -55,13 +55,14 @@ private:
 	void createDatabase() const;
 
 	int countQuery(const char* sql) const;
-
 	static int albumListDBCallback(void* albumList, int argc, char** argv, char** azColName);
 	static int singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName);
-	static int singleColumnDBCallback(void* out, int argc, char** argv, char** azColName);
-	static int printUserDBCallback(void*, int argc, char** argv, char** azColName);
 	static int singleUserDBCallback(void* outUser, int argc, char** argv, char** azColName);
 	static int singlePictureDBCallback(void* outPicture, int argc, char** argv, char** azColName);
+	static int singleFloatDBCallback(void* out, int argc, char** argv, char** azColName);
+	static int singleIntDBCallback(void* out, int argc, char** argv, char** azColName);
+
+	static int printUserDBCallback(void*, int argc, char** argv, char** azColName);
 	static int pictureListDBCallback(void* pictureList, int argc, char** argv, char** azColName);
 
 	const char* _dbFileName;
