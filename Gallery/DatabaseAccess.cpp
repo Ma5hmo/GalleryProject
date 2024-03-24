@@ -337,9 +337,9 @@ void DatabaseAccess::tagUserInPicture(const std::string& albumName, const std::s
 
 void DatabaseAccess::untagUserInPicture(const std::string& albumName, const std::string& pictureName, int userId)
 {
-	const auto& sql = "DELETE FROM Tags JOIN Pictures ON Pictures.ID=Tags.PICTURE_ID JOIN Albums ON\
- Pictures.ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName
-		+ "\" AND Pictures.NAME=\"" + pictureName + "\" AND Tags.USER_ID=" + std::to_string(userId) + ';';
+	const auto& sql = "DELETE FROM Tags WHERE USER_ID=" + std::to_string(userId)
+		+ " AND PICTURE_ID IN (SELECT p.ID FROM Pictures p JOIN Albums a ON ALBUM_ID=a.ID WHERE p.NAME=\"" 
+		+ pictureName + "\" AND a.NAME=\"" + albumName + "\");";
 	execStatement(sql.c_str());
 }
 
