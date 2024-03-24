@@ -390,7 +390,7 @@ int DatabaseAccess::countAlbumsOwnedOfUser(const User& user)
 
 int DatabaseAccess::countAlbumsTaggedOfUser(const User& user)
 {
-	const auto& sql = "SELECT * FROM Albums a JOIN Pictures p ON Albums.ID=ALBUM_ID JOIN Tags t ON "\
+	const auto& sql = "SELECT * FROM Albums a JOIN Pictures p ON a.ID=ALBUM_ID JOIN Tags t ON "\
 		"PICTURE_ID=p.ID WHERE t.USER_ID=" + std::to_string(user.getId()) + ';';
 	return countQuery(sql.c_str());
 }
@@ -403,8 +403,8 @@ int DatabaseAccess::countTagsOfUser(const User& user)
 
 float DatabaseAccess::averageTagsPerAlbumOfUser(const User& user)
 {
-	const auto& sql = "SELECT AVG(C) FROM (SELECT COUNT(1) C FROM Albums JOIN Pictures ON Albums.ID=Pictures.ALBUM_ID"\
-		"JOIN Tags ON PICTURE_ID = Pictures.ID WHERE Tags.USER_ID = " + std::to_string(user.getId()) + "GROUP BY Albums.ID);";
+	const auto& sql = "SELECT AVG(C) FROM (SELECT COUNT(1) C FROM Albums a JOIN Pictures p ON a.ID=p.ALBUM_ID "\
+		"JOIN Tags t ON PICTURE_ID=p.ID WHERE t.USER_ID=" + std::to_string(user.getId()) + " GROUP BY a.ID);";
 	float avg;
 	execQuery(sql.c_str(), singleFloatDBCallback, &avg);
 	return avg;
