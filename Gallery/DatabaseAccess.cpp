@@ -126,21 +126,52 @@ int DatabaseAccess::albumListDBCallback(void* albumList, int argc, char** argv, 
 int DatabaseAccess::singleAlbumDBCallback(void* outAlbum, int argc, char** argv, char** azColName)
 {
 	Album* album = (Album*)outAlbum;
+	Picture currPic(0, "");
 	for (int i = 0; i < argc; i++)
 	{
+		if (argv[i] == NULL) // null string
+		{
+			continue; // column is empty
+		}
+
 		const std::string& col = azColName[i];
-		if (col == "NAME")
+		if (col == "ANAME")
 		{
 			album->setName(argv[i]);
 		}
-		else if (col == "CREATION_DATE")
+		else if (col == "ACD")
 		{
 			album->setCreationDate(argv[i]);
 		}
-		else if (col == "USER_ID")
+		else if (col == "AUID")
 		{
 			album->setOwner(std::stoi(argv[i]));
 		}
+		else if (col == "PNAME")
+		{
+			currPic.setName(argv[i]);
+		}
+		else if (col == "PLOC")
+		{
+			currPic.setPath(argv[i]);
+		}
+		else if (col == "PCD")
+		{
+			currPic.setCreationDate(argv[i]);
+		}
+		else if (col == "TUID")
+		{
+			currPic.tagUser(std::stoi(argv[i]));
+		}
+	}
+	if (album->doesPictureExists(currPic.getName()))
+	{
+		// theres only one picture in currPic since were only looking at a single column
+		album->tagUserInPicture(*currPic.getUserTags().begin(), currPic.getName());
+	}
+	else
+	{
+		album->addPicture(currPic);
 	}
 	return 0;
 }
@@ -223,7 +254,7 @@ int DatabaseAccess::pictureListDBCallback(void* pictureList, int argc, char** ar
 
 const std::list<Album> DatabaseAccess::getAlbums()
 {
-	auto sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums;";
+	auto sql = "SELECT NAME ANAME, CREATION_DATE ACD, USER_ID AUID FROM Albums;";
 	std::list<Album> ans;
 	execQuery(sql, albumListDBCallback, &ans);
 	return ans;
@@ -231,7 +262,7 @@ const std::list<Album> DatabaseAccess::getAlbums()
 
 const std::list<Album> DatabaseAccess::getAlbumsOfUser(const User& user)
 {
-	const auto& sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums WHERE USER_ID=" + std::to_string(user.getId()) + ';';
+	const auto& sql = "SELECT NAME ANAME, CREATION_DATE ACD, USER_ID AUID FROM Albums WHERE AUID=" + std::to_string(user.getId()) + ';';
 	std::list<Album> ans;
 	execQuery(sql.c_str(), albumListDBCallback, &ans);
 	return ans;
@@ -259,8 +290,10 @@ bool DatabaseAccess::doesAlbumExists(const std::string& albumName, int userId)
 
 Album DatabaseAccess::openAlbum(const std::string& albumName)
 {
-	//	const auto& sql = "SELECT * FROM Tags JOIN Pictures ON PICTURE_ID=Pictures.id JOIN Albums ON ALBUM_ID=Albums.ID WHERE Albums.NAME=\"" + albumName + "\";";
-	const auto& sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums WHERE NAME=\"" + albumName + "\";";
+	// const auto& sql = "SELECT NAME, CREATION_DATE, USER_ID FROM Albums WHERE NAME=\"" + albumName + "\";";
+	const auto& sql = "SELECT a.NAME ANAME, a.CREATION_DATE ACD, a.USER_ID AUID, p.NAME PNAME, LOCATION PLOC, p.CREATION_DATE PCD, p.ALBUM_ID PAID, t.USER_ID TUID FROM Albums a "\
+		"LEFT JOIN Pictures p ON ALBUM_ID = a.ID LEFT JOIN Tags t ON PICTURE_ID = p.ID "\
+		"WHERE ANAME=\"" + albumName + "\";";
 	Album album;
 	execQuery(sql.c_str(), singleAlbumDBCallback, &album);
 	return album;
