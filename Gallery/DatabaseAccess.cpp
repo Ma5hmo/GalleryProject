@@ -10,7 +10,7 @@
 #include "SQLException.h"
 
 DatabaseAccess::DatabaseAccess()
-	: _db(nullptr), _dbFileName(DEFAULT_DB_FILE_NAME)
+	: _db(nullptr), _dbFileName("galleryDB.sqlite")
 {
 }
 
