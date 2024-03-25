@@ -200,14 +200,17 @@ void AlbumManager::showPicture()
 	
 	auto pic = m_openAlbum.getPicture(picName);
 	if ( !fileExistsOnDisk(pic.getPath()) ) {
-		throw MyException("Error: Can't open <" + picName+ "> since it doesnt exist on disk.\n");
+		throw MyException("Error: Can't open <" + picName + "> since it doesnt exist on disk.\n");
 	}
 
-	int inp;
-	std::cout << "Which program to use?" << std::endl
-		<< "\t0 - MS Paint" << std::endl
-		<< "\t1 - Irfan View" << std::endl;
-	std::cin >> inp;
+	int inp = 0;
+	do
+	{
+		std::cout << "Which program to use?" << std::endl
+			<< "\t0 - MS Paint" << std::endl
+			<< "\t1 - Irfan View" << std::endl;
+		std::cin >> inp;
+	} while (inp < 0 || inp > 1);
 
 	std::string cmd = (inp == 0
 						? "C:\\Windows\\system32\\mspaint.exe \""
@@ -215,13 +218,19 @@ void AlbumManager::showPicture()
 						+ pic.getPath() + "\"";
 	
 	STARTUPINFO si = { 0 };
-	CreateProcessA(NULL, const_cast<LPSTR>(cmd.c_str()), NULL, NULL, FALSE, 0, NULL, NULL, &si, &showPicPI);
+	if (CreateProcessA(NULL, const_cast<LPSTR>(cmd.c_str()), NULL,
+		NULL, FALSE, 0, NULL, NULL, &si, &showPicPI) == FALSE)
+	{
+		std::cerr << "Failed opening proccess. Err code - " << GetLastError() << std::endl;
+		return;
+	}
 
 	SetConsoleCtrlHandler(CtrlCHandler, TRUE);
 	WaitForSingleObject(showPicPI.hThread, INFINITE);
 	SetConsoleCtrlHandler(CtrlCHandler, FALSE); // restore default ctrl c handling
 	CloseHandle(showPicPI.hProcess);
 	CloseHandle(showPicPI.hThread);
+	showPicPI = { 0 };
 }
 
 BOOL WINAPI AlbumManager::CtrlCHandler(DWORD fdwCtrlType)
