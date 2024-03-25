@@ -203,14 +203,23 @@ void AlbumManager::showPicture()
 		throw MyException("Error: Can't open <" + picName+ "> since it doesnt exist on disk.\n");
 	}
 
-	STARTUPINFO si = { 0 };
-	std::string cmd = "C:\\Windows\\system32\\mspaint.exe \"" + pic.getPath() + "\"";
+	int inp;
+	std::cout << "Which program to use?" << std::endl
+		<< "\t0 - MS Paint" << std::endl
+		<< "\t1 - Irfan View" << std::endl;
+	std::cin >> inp;
+
+	std::string cmd = (inp == 0
+						? "C:\\Windows\\system32\\mspaint.exe \""
+						: "C:\\Program Files\\IrfanView\\i_view64.exe \"")
+						+ pic.getPath() + "\"";
 	
+	STARTUPINFO si = { 0 };
 	CreateProcessA(NULL, const_cast<LPSTR>(cmd.c_str()), NULL, NULL, FALSE, 0, NULL, NULL, &si, &showPicPI);
 
-	SetConsoleCtrlHandler(CtrlCHandler, true);
+	SetConsoleCtrlHandler(CtrlCHandler, TRUE);
 	WaitForSingleObject(showPicPI.hThread, INFINITE);
-	SetConsoleCtrlHandler(NULL, false); // restore default ctrl c handling
+	SetConsoleCtrlHandler(CtrlCHandler, FALSE); // restore default ctrl c handling
 	CloseHandle(showPicPI.hProcess);
 	CloseHandle(showPicPI.hThread);
 }
