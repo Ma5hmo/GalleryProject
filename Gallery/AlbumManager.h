@@ -38,6 +38,7 @@ private:
 	void listPicturesInAlbum();
 	void showPicture();
 	static BOOL WINAPI CtrlCHandler(DWORD fdwCtrlType);
+	void makeReadOnly();
 
 	// tags related
 	void tagUserInPicture();

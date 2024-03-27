@@ -245,7 +245,7 @@ void AlbumManager::showPicture()
 	// check if it had been edited during the time the proccess had ran
 	if (memcmp(&firstWriteTime, &secondWriteTime, sizeof(FILETIME)) != 0)
 	{
-		std::cerr << "The picture has been edited during the show." << std::endl;
+		std::cout << "The picture has been edited during the show." << std::endl;
 	}
 }
 
@@ -257,6 +257,33 @@ BOOL WINAPI AlbumManager::CtrlCHandler(DWORD fdwCtrlType)
 		return TRUE;
 	}
 	return FALSE;
+}
+
+void AlbumManager::makeReadOnly()
+{
+	refreshOpenAlbum();
+
+	std::string picName = getInputFromConsole("Enter picture name: ");
+	if (!m_openAlbum.doesPictureExists(picName)) {
+		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
+	}
+
+	auto pic = m_openAlbum.getPicture(picName);
+	if (!fileExistsOnDisk(pic.getPath())) {
+		throw MyException("Error: Can't access <" + picName + "> since it doesnt exist on disk.\n");
+	}
+
+	DWORD fileAtt = GetFileAttributesA(pic.getPath().c_str());
+	// switch the READONLY attribute bit using the XOR operator
+	SetFileAttributesA(pic.getPath().c_str(), fileAtt ^ FILE_ATTRIBUTE_READONLY);
+	if (fileAtt & FILE_ATTRIBUTE_READONLY) // contains the READONLY bit using the AND operator
+	{
+		std::cout << "Removed Read Only attribute from picture <" << picName << ">." << std::endl;
+	}
+	else
+	{
+		std::cout << "Added Read Only attribute to picture <" << picName << ">." << std::endl;
+	}
 }
 
 void AlbumManager::tagUserInPicture()
@@ -480,6 +507,7 @@ const std::vector<struct CommandGroup> AlbumManager::m_prompts  = {
 			{ ADD_PICTURE    , "Add picture." },
 			{ REMOVE_PICTURE , "Remove picture." },
 			{ SHOW_PICTURE   , "Show picture." },
+			{ MAKE_READONLY  , "Set picture read-only attribute."},
 			{ LIST_PICTURES  , "List pictures." },
 			{ TAG_USER		 , "Tag user." },
 			{ UNTAG_USER	 , "Untag user." },
@@ -523,6 +551,7 @@ const std::map<CommandType, AlbumManager::handler_func_t> AlbumManager::m_comman
 	{ REMOVE_PICTURE, &AlbumManager::removePictureFromAlbum },
 	{ LIST_PICTURES, &AlbumManager::listPicturesInAlbum },
 	{ SHOW_PICTURE, &AlbumManager::showPicture },
+	{ MAKE_READONLY, &AlbumManager::makeReadOnly },
 	{ TAG_USER, &AlbumManager::tagUserInPicture, },
 	{ UNTAG_USER, &AlbumManager::untagUserInPicture },
 	{ LIST_TAGS, &AlbumManager::listUserTags },
