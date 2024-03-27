@@ -4,6 +4,8 @@
 #include "MyException.h"
 #include "AlbumNotOpenException.h"
 
+#include <Shlwapi.h>
+
 PROCESS_INFORMATION AlbumManager::showPicPI = { 0 };
 
 AlbumManager::AlbumManager(IDataAccess& dataAccess) :
@@ -286,6 +288,40 @@ void AlbumManager::makeReadOnly()
 	}
 }
 
+void AlbumManager::copyPicture()
+{
+	refreshOpenAlbum();
+
+	std::string picName = getInputFromConsole("Enter picture name: ");
+	if (!m_openAlbum.doesPictureExists(picName)) {
+		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
+	}
+
+	auto pic = m_openAlbum.getPicture(picName);
+	if (!fileExistsOnDisk(pic.getPath())) {
+		throw MyException("Error: Can't copy <" + picName + "> since it doesnt exist on disk.\n");
+	}
+
+	auto lastSlashIndex = pic.getPath().find_last_of('\\') + 1; // the end of the directory path
+	auto copiedFilePath = pic.getPath().substr(0, lastSlashIndex) + "CopyOf_"
+		+ pic.getPath().substr(lastSlashIndex);
+	
+	if (CopyFileA(pic.getPath().c_str(), copiedFilePath.c_str(), TRUE) == 0)
+	{
+		throw MyException("Error copying file. Error code - " + std::to_string(GetLastError()));
+	}
+
+	// add the copied picture to the album
+	// use this constructor because it sets the creation date automatically
+	Picture copiedPic(++m_nextPictureId, "CopyOf_" + picName); 
+	copiedPic.setPath(copiedFilePath);
+	m_dataAccess.addPictureToAlbumByName(m_openAlbum.getName(), copiedPic);
+	m_openAlbum.addPicture(copiedPic);
+	std::cout << "Successfuly copied picture in album." << std::endl 
+		<< "\tName - <" << copiedPic.getName() << '>' << std::endl 
+		<< "\tPath - <" << copiedFilePath << ">." << std::endl;
+}
+
 void AlbumManager::tagUserInPicture()
 {
 	refreshOpenAlbum();
@@ -508,6 +544,7 @@ const std::vector<struct CommandGroup> AlbumManager::m_prompts  = {
 			{ REMOVE_PICTURE , "Remove picture." },
 			{ SHOW_PICTURE   , "Show picture." },
 			{ MAKE_READONLY  , "Set picture read-only attribute."},
+			{ COPY_PICTURE   , "Make a copy of a picture."},
 			{ LIST_PICTURES  , "List pictures." },
 			{ TAG_USER		 , "Tag user." },
 			{ UNTAG_USER	 , "Untag user." },
@@ -552,6 +589,7 @@ const std::map<CommandType, AlbumManager::handler_func_t> AlbumManager::m_comman
 	{ LIST_PICTURES, &AlbumManager::listPicturesInAlbum },
 	{ SHOW_PICTURE, &AlbumManager::showPicture },
 	{ MAKE_READONLY, &AlbumManager::makeReadOnly },
+	{ COPY_PICTURE, &AlbumManager::copyPicture },
 	{ TAG_USER, &AlbumManager::tagUserInPicture, },
 	{ UNTAG_USER, &AlbumManager::untagUserInPicture },
 	{ LIST_TAGS, &AlbumManager::listUserTags },
