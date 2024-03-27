@@ -3,6 +3,7 @@
 #include "Constants.h"
 #include "MemoryAccess.h"
 #include "Album.h"
+#include <Windows.h>
 
 
 class AlbumManager
@@ -36,6 +37,7 @@ private:
 	void removePictureFromAlbum();
 	void listPicturesInAlbum();
 	void showPicture();
+	static BOOL WINAPI CtrlCHandler(DWORD fdwCtrlType);
 
 	// tags related
 	void tagUserInPicture();
@@ -60,6 +62,8 @@ private:
 
 	static const std::vector<struct CommandGroup> m_prompts;
 	static const std::map<CommandType, handler_func_t> m_commands;
+
+	static PROCESS_INFORMATION showPicPI;
 
 };
 
