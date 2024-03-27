@@ -39,6 +39,7 @@ private:
 	void showPicture();
 	static BOOL WINAPI CtrlCHandler(DWORD fdwCtrlType);
 	void makeReadOnly();
+	void copyPicture();
 
 	// tags related
 	void tagUserInPicture();

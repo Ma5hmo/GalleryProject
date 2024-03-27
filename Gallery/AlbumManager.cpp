@@ -286,6 +286,10 @@ void AlbumManager::makeReadOnly()
 	}
 }
 
+void AlbumManager::copyPicture()
+{
+}
+
 void AlbumManager::tagUserInPicture()
 {
 	refreshOpenAlbum();
@@ -508,6 +512,7 @@ const std::vector<struct CommandGroup> AlbumManager::m_prompts  = {
 			{ REMOVE_PICTURE , "Remove picture." },
 			{ SHOW_PICTURE   , "Show picture." },
 			{ MAKE_READONLY  , "Set picture read-only attribute."},
+			{ COPY_PICTURE   , "Make a copy of a picture."},
 			{ LIST_PICTURES  , "List pictures." },
 			{ TAG_USER		 , "Tag user." },
 			{ UNTAG_USER	 , "Untag user." },
@@ -552,6 +557,7 @@ const std::map<CommandType, AlbumManager::handler_func_t> AlbumManager::m_comman
 	{ LIST_PICTURES, &AlbumManager::listPicturesInAlbum },
 	{ SHOW_PICTURE, &AlbumManager::showPicture },
 	{ MAKE_READONLY, &AlbumManager::makeReadOnly },
+	{ COPY_PICTURE, &AlbumManager::copyPicture },
 	{ TAG_USER, &AlbumManager::tagUserInPicture, },
 	{ UNTAG_USER, &AlbumManager::untagUserInPicture },
 	{ LIST_TAGS, &AlbumManager::listUserTags },
