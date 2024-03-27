@@ -282,7 +282,7 @@ void AlbumManager::makeReadOnly()
 	}
 	else
 	{
-		std::cout << "Added Read Only attribute from picture <" << picName << ">." << std::endl;
+		std::cout << "Added Read Only attribute to picture <" << picName << ">." << std::endl;
 	}
 }
 
