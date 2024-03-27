@@ -203,34 +203,50 @@ void AlbumManager::showPicture()
 		throw MyException("Error: Can't open <" + picName + "> since it doesnt exist on disk.\n");
 	}
 
+	FILETIME firstWriteTime = { 0 };
+	FILETIME secondWriteTime = { 0 };
+	HANDLE hFile = CreateFileA(pic.getPath().c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	GetFileTime(hFile, NULL, NULL, &firstWriteTime); // get the last time it was edited
+	CloseHandle(hFile); // close hFile so the process can access it
+	hFile = NULL;
+
 	int inp = 0;
 	do
 	{
-		std::cout << "Which program to use?" << std::endl
-			<< "\t0 - MS Paint" << std::endl
-			<< "\t1 - Irfan View" << std::endl;
-		std::cin >> inp;
+		inp = std::stoi(getInputFromConsole("Which program to use?\n\t0 - MS Paint\n\t1 - Irfan View\n"));
 	} while (inp < 0 || inp > 1);
 
-	std::string cmd = (inp == 0
+	auto cmd = (inp == 0
 						? "C:\\Windows\\system32\\mspaint.exe \""
 						: "C:\\Program Files\\IrfanView\\i_view64.exe \"")
 						+ pic.getPath() + "\"";
-	
+
 	STARTUPINFO si = { 0 };
 	if (CreateProcessA(NULL, const_cast<LPSTR>(cmd.c_str()), NULL,
-		NULL, FALSE, 0, NULL, NULL, &si, &showPicPI) == FALSE)
+		NULL, FALSE, 0, NULL, NULL, &si, &showPicPI) == 0)
 	{
 		std::cerr << "Failed opening proccess. Err code - " << GetLastError() << std::endl;
 		return;
 	}
 
-	SetConsoleCtrlHandler(CtrlCHandler, TRUE);
+	SetConsoleCtrlHandler(CtrlCHandler, TRUE); // set ctrl c to close the program
 	WaitForSingleObject(showPicPI.hThread, INFINITE);
 	SetConsoleCtrlHandler(CtrlCHandler, FALSE); // restore default ctrl c handling
+
 	CloseHandle(showPicPI.hProcess);
 	CloseHandle(showPicPI.hThread);
 	showPicPI = { 0 };
+
+	hFile = CreateFileA(pic.getPath().c_str(), NULL, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+		OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+	GetFileTime(hFile, NULL, NULL, &secondWriteTime);
+	CloseHandle(hFile);
+	// check if it had been edited during the time the proccess had ran
+	if (memcmp(&firstWriteTime, &secondWriteTime, sizeof(FILETIME)) != 0)
+	{
+		std::cerr << "The picture has been edited during the show." << std::endl;
+	}
 }
 
 BOOL WINAPI AlbumManager::CtrlCHandler(DWORD fdwCtrlType)
