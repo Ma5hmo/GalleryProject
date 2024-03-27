@@ -5,7 +5,6 @@
 #include "Album.h"
 #include <Windows.h>
 
-
 class AlbumManager
 {
 public:

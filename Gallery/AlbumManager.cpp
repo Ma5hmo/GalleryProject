@@ -4,6 +4,8 @@
 #include "MyException.h"
 #include "AlbumNotOpenException.h"
 
+#include <Shlwapi.h>
+
 PROCESS_INFORMATION AlbumManager::showPicPI = { 0 };
 
 AlbumManager::AlbumManager(IDataAccess& dataAccess) :
@@ -288,6 +290,33 @@ void AlbumManager::makeReadOnly()
 
 void AlbumManager::copyPicture()
 {
+	refreshOpenAlbum();
+
+	std::string picName = getInputFromConsole("Enter picture name: ");
+	if (!m_openAlbum.doesPictureExists(picName)) {
+		throw MyException("Error: There is no picture with name <" + picName + ">.\n");
+	}
+
+	auto pic = m_openAlbum.getPicture(picName);
+	if (!fileExistsOnDisk(pic.getPath())) {
+		throw MyException("Error: Can't copy <" + picName + "> since it doesnt exist on disk.\n");
+	}
+
+	auto lastSlashIndex = pic.getPath().find_last_of('\\');
+	auto copiedFilePath = pic.getPath().substr(0, lastSlashIndex + 1) + std::string("CopyOf_")
+		+ pic.getPath().substr(lastSlashIndex + 1);
+	
+	if (CopyFileA(pic.getPath().c_str(), copiedFilePath.c_str(), TRUE) == 0)
+	{
+		throw MyException("Error copying file. Error code - " + std::to_string(GetLastError()));
+	}
+
+	// add the copied picture to the album
+	// this constructor sets the creation date automatically
+	Picture copiedPic(++m_nextPictureId, "CopyOf_" + picName); 
+	copiedPic.setPath(copiedFilePath);
+	m_dataAccess.addPictureToAlbumByName(m_openAlbum.getName(), copiedPic);
+	m_openAlbum.addPicture(copiedPic);
 }
 
 void AlbumManager::tagUserInPicture()
