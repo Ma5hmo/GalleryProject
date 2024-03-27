@@ -302,9 +302,9 @@ void AlbumManager::copyPicture()
 		throw MyException("Error: Can't copy <" + picName + "> since it doesnt exist on disk.\n");
 	}
 
-	auto lastSlashIndex = pic.getPath().find_last_of('\\');
-	auto copiedFilePath = pic.getPath().substr(0, lastSlashIndex + 1) + "CopyOf_"
-		+ pic.getPath().substr(lastSlashIndex + 1);
+	auto lastSlashIndex = pic.getPath().find_last_of('\\') + 1; // the end of the directory path
+	auto copiedFilePath = pic.getPath().substr(0, lastSlashIndex) + "CopyOf_"
+		+ pic.getPath().substr(lastSlashIndex);
 	
 	if (CopyFileA(pic.getPath().c_str(), copiedFilePath.c_str(), TRUE) == 0)
 	{
