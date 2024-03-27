@@ -303,7 +303,7 @@ void AlbumManager::copyPicture()
 	}
 
 	auto lastSlashIndex = pic.getPath().find_last_of('\\');
-	auto copiedFilePath = pic.getPath().substr(0, lastSlashIndex + 1) + std::string("CopyOf_")
+	auto copiedFilePath = pic.getPath().substr(0, lastSlashIndex + 1) + "CopyOf_"
 		+ pic.getPath().substr(lastSlashIndex + 1);
 	
 	if (CopyFileA(pic.getPath().c_str(), copiedFilePath.c_str(), TRUE) == 0)
@@ -312,11 +312,14 @@ void AlbumManager::copyPicture()
 	}
 
 	// add the copied picture to the album
-	// this constructor sets the creation date automatically
+	// use this constructor because it sets the creation date automatically
 	Picture copiedPic(++m_nextPictureId, "CopyOf_" + picName); 
 	copiedPic.setPath(copiedFilePath);
 	m_dataAccess.addPictureToAlbumByName(m_openAlbum.getName(), copiedPic);
 	m_openAlbum.addPicture(copiedPic);
+	std::cout << "Successfuly copied picture in album." << std::endl 
+		<< "\tName - <" << copiedPic.getName() << '>' << std::endl 
+		<< "\tPath - <" << copiedFilePath << ">." << std::endl;
 }
 
 void AlbumManager::tagUserInPicture()
