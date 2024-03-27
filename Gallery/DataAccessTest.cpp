@@ -2,8 +2,6 @@
 #include <cstdio>
 #include "SQLException.h"
 
-const char* DataAccessTest::_dbFileName = "testDB.sqlite";
-
 DataAccessTest::DataAccessTest()
 {
 	std::remove(_dbFileName);

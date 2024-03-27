@@ -15,7 +15,7 @@ public:
 	void removeRows();
 
 private:
-	static const char* _dbFileName;
+	static constexpr char* _dbFileName = "testDB.sqlite";
 	DatabaseAccess _dba;
 };
 
