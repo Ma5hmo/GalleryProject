@@ -245,7 +245,7 @@ void AlbumManager::showPicture()
 	// check if it had been edited during the time the proccess had ran
 	if (memcmp(&firstWriteTime, &secondWriteTime, sizeof(FILETIME)) != 0)
 	{
-		std::cerr << "The picture has been edited during the show." << std::endl;
+		std::cout << "The picture has been edited during the show." << std::endl;
 	}
 }
 
@@ -257,6 +257,10 @@ BOOL WINAPI AlbumManager::CtrlCHandler(DWORD fdwCtrlType)
 		return TRUE;
 	}
 	return FALSE;
+}
+
+void AlbumManager::makeReadOnly()
+{
 }
 
 void AlbumManager::tagUserInPicture()
@@ -480,6 +484,7 @@ const std::vector<struct CommandGroup> AlbumManager::m_prompts  = {
 			{ ADD_PICTURE    , "Add picture." },
 			{ REMOVE_PICTURE , "Remove picture." },
 			{ SHOW_PICTURE   , "Show picture." },
+			{ MAKE_READONLY  , "Set picture read-only attribute."},
 			{ LIST_PICTURES  , "List pictures." },
 			{ TAG_USER		 , "Tag user." },
 			{ UNTAG_USER	 , "Untag user." },
