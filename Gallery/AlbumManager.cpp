@@ -1,4 +1,4 @@
-﻿#include "AlbumManager.h"
+#include "AlbumManager.h"
 #include <iostream>
 #include "Constants.h"
 #include "MyException.h"
@@ -6,9 +6,9 @@
 
 #include <Shlwapi.h>
 
-PROCESS_INFORMATION AlbumManager::showPicPI = { 0 };
+    	PROCESS_INFORMATION     AlbumManager::showPicPI     = { 0 };
 
-AlbumManager::AlbumManager(IDataAccess& dataAccess) :
+ AlbumManager::AlbumManager(IDataAccess& dataAccess):
     m_dataAccess(dataAccess), m_nextPictureId(100), m_nextUserId(200)
 {
 	m_dataAccess.open();
