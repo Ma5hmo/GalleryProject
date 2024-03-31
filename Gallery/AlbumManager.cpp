@@ -6,7 +6,7 @@
 
 #include <Shlwapi.h>
 
-    	PROCESS_INFORMATION     AlbumManager::showPicPI     = { 0 };
+PROCESS_INFORMATION AlbumManager::showPicPI = { 0 };
 
  AlbumManager::AlbumManager(IDataAccess& dataAccess):
     m_dataAccess(dataAccess), m_nextPictureId(100), m_nextUserId(200)
