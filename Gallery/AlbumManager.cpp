@@ -130,8 +130,8 @@ void AlbumManager::listAlbumsOfUser()
 		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
 	}
 
-	const User& user = m_dataAccess.getUser(userId);
-	const std::list<Album>& albums = m_dataAccess.getAlbumsOfUser(user);
+	User user = m_dataAccess.getUser(userId);
+	std::list<Album> albums = m_dataAccess.getAlbumsOfUser(user);
 
 	std::cout << "Albums list of user@" << user.getId() << ":" << std::endl;
 	std::cout << "-----------------------" << std::endl;
@@ -381,15 +381,15 @@ void AlbumManager::listUserTags()
 	}
 	auto pic = m_openAlbum.getPicture(picName); 
 
-	const std::set<int> users = pic.getUserTags();
+	const std::set<int>& users = pic.getUserTags();
 
 	if ( 0 == users.size() )  {
-		throw MyException("Error: There is no user tegged in <" + picName + ">.\n");
+		throw MyException("Error: There is no user tagged in <" + picName + ">.\n");
 	}
 
 	std::cout << "Tagged users in picture <" << picName << ">:" << std::endl;
 	for (const int user_id: users) {
-		const User user = m_dataAccess.getUser(user_id);
+		User user = m_dataAccess.getUser(user_id);
 		std::cout << user << std::endl;
 	}
 	std::cout << std::endl;
@@ -417,7 +417,7 @@ void AlbumManager::removeUser()
 	if ( !m_dataAccess.doesUserExists(userId) ) {
 		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
 	}
-	const User& user = m_dataAccess.getUser(userId);
+	User user = m_dataAccess.getUser(userId);
 	if (isCurrentAlbumSet() && userId == m_openAlbum.getOwnerId()) {
 		closeAlbum();
 	}
@@ -439,7 +439,7 @@ void AlbumManager::userStatistics()
 		throw MyException("Error: There is no user with id @" + userIdStr + "\n");
 	}
 
-	const User& user = m_dataAccess.getUser(userId);
+	User user = m_dataAccess.getUser(userId);
 
 	std::cout << "user @" << userId << " Statistics:" << std::endl << "--------------------" << std::endl <<
 		"  + Count of Albums Tagged: " << m_dataAccess.countAlbumsTaggedOfUser(user) << std::endl <<
@@ -452,16 +452,12 @@ void AlbumManager::userStatistics()
 // ******************* Queries ******************* 
 void AlbumManager::topTaggedUser()
 {
-	const User& user = m_dataAccess.getTopTaggedUser();
-
-	std::cout << "The top tagged user is: " << user.getName() << std::endl;
+	std::cout << "The top tagged user is: " << m_dataAccess.getTopTaggedUser().getName() << std::endl;
 }
 
 void AlbumManager::topTaggedPicture()
 {
-	const Picture& picture = m_dataAccess.getTopTaggedPicture();
-
-	std::cout << "The top tagged picture is: " << picture.getName() << std::endl;
+	std::cout << "The top tagged picture is: " << m_dataAccess.getTopTaggedPicture().getName() << std::endl;
 }
 
 void AlbumManager::picturesTaggedUser()
@@ -478,7 +474,7 @@ void AlbumManager::picturesTaggedUser()
 
 	std::cout << "List of pictures that User@" << user.getId() << " tagged :" << std::endl;
 	for (const Picture& picture: taggedPictures) {
-		std::cout <<"   + "<< picture << std::endl;
+		std::cout << "   + " << picture << std::endl;
 	}
 	std::cout << std::endl;
 }
