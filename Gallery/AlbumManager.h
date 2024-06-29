@@ -57,6 +57,7 @@ private:
 	void exit();
 
 	std::string getInputFromConsole(const std::string& message);
+	int getIntInputFromConsole(const std::string& message);
 	bool fileExistsOnDisk(const std::string& filename);
 	void refreshOpenAlbum();
     bool isCurrentAlbumSet() const;
